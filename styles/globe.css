@@ -69,6 +69,45 @@
     font-size: 16px;
 }
 
+/* ===== BOTÃO DO QUIZ ===== */
+.floating-quiz-btn {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: auto;
+    z-index: 20;
+    animation: slideIn 0.8s ease-out 0.4s both;
+}
+
+.floating-quiz-btn .quiz-btn {
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(0, 212, 255, 0.1));
+    backdrop-filter: blur(10px);
+    border: 1px solid #00d4ff;
+    border-radius: 12px;
+    padding: 12px 20px;
+    color: #00d4ff;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+}
+
+.floating-quiz-btn .quiz-btn:hover {
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.3), rgba(0, 212, 255, 0.2));
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 212, 255, 0.4);
+}
+
+.floating-quiz-btn .quiz-btn .icon {
+    font-size: 16px;
+}
+
 /* ===== PAINEL DE CONTROLE PRINCIPAL ===== */
 .main-control-panel {
     position: absolute;
