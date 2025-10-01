@@ -1,0 +1,44 @@
+{
+  "name": "airquest-nasa-space-apps",
+  "version": "1.0.0",
+  "description": "AirQuest - Veja, aprenda, jogue e transforme o ar que você respira. Protótipo para NASA Space Apps Challenge.",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "serve": "python -m http.server 8000",
+    "dev": "python -m http.server 8000",
+    "demo": "open demo.html"
+  },
+  "keywords": [
+    "nasa",
+    "space-apps",
+    "air-quality",
+    "environment",
+    "education",
+    "gamification",
+    "threejs",
+    "climate",
+    "pollution",
+    "sustainability"
+  ],
+  "author": "NASA Space Apps Challenge Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nasa-space-apps/airquest"
+  },
+  "bugs": {
+    "url": "https://github.com/nasa-space-apps/airquest/issues"
+  },
+  "homepage": "https://nasa-space-apps.github.io/airquest",
+  "devDependencies": {},
+  "dependencies": {},
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ]
+}

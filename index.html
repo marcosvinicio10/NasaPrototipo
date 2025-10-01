@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AirQuest - Veja, aprenda, jogue e transforme o ar que você respira</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="nasa-api.js"></script>
+</head>
+<body>
+    <!-- Tela Inicial -->
+    <section id="home-screen" class="screen active">
+        <div class="particles-container" id="particles"></div>
+        <div class="content">
+            <div class="logo-section">
+                <h1 class="logo">🌍 AirQuest</h1>
+                <p class="slogan">Veja, aprenda, jogue e transforme o ar que você respira</p>
+                <div class="nasa-badge">
+                    <span>Powered by NASA Earth Data</span>
+                </div>
+            </div>
+            
+            <div class="main-question">
+                <h2>Você sabe o que está respirando agora?</h2>
+            </div>
+            
+            <div class="cta-buttons">
+                <button class="cta-primary" onclick="showGlobe()">
+                    🔵 Ver o ar agora
+                </button>
+                <button class="cta-secondary" onclick="showIntro()">
+                    ⚪ Por que isso importa?
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Introdução/Storytelling -->
+    <section id="intro-screen" class="screen">
+        <div class="intro-content">
+            <div class="intro-header">
+                <h2>Por que a qualidade do ar importa?</h2>
+                <button class="back-btn" onclick="showHome()">← Voltar</button>
+            </div>
+            
+            <div class="story-cards">
+                <div class="story-card" data-delay="0">
+                    <div class="card-icon">👶</div>
+                    <div class="card-data">2x mais</div>
+                    <div class="card-text">Crianças respiram mais poluição que adultos</div>
+                </div>
+                
+                <div class="story-card" data-delay="1">
+                    <div class="card-icon">🏙</div>
+                    <div class="card-data">7 milhões</div>
+                    <div class="card-text">Mortes por ano relacionadas à poluição do ar - OMS</div>
+                </div>
+                
+                <div class="story-card" data-delay="2">
+                    <div class="card-icon">🚀</div>
+                    <div class="card-data">TEMPO</div>
+                    <div class="card-text">Satélites da NASA monitoram a qualidade do ar em tempo real</div>
+                </div>
+            </div>
+            
+            <button class="explore-btn" onclick="showGlobe()">
+                Explorar o planeta em 3D
+            </button>
+        </div>
+    </section>
+
+    <!-- Globo 3D Interativo -->
+    <section id="globe-screen" class="screen">
+        <div class="globe-header">
+            <h2>Planeta Terra - Qualidade do Ar em Tempo Real</h2>
+            <button class="back-btn" onclick="showHome()">← Voltar</button>
+        </div>
+        
+        <div class="globe-container">
+            <canvas id="globe-canvas"></canvas>
+            
+            <div class="globe-controls">
+                <div class="data-layers">
+                    <h3>Camadas de Dados</h3>
+                    <label class="layer-toggle">
+                        <input type="checkbox" id="aqi-layer" checked>
+                        <span>AQI (Índice de Qualidade do Ar)</span>
+                    </label>
+                    <label class="layer-toggle">
+                        <input type="checkbox" id="pollutants-layer">
+                        <span>Poluentes (MP2.5, NO₂, O₃)</span>
+                    </label>
+                    <label class="layer-toggle">
+                        <input type="checkbox" id="fires-layer">
+                        <span>Queimadas (Focos Ativos)</span>
+                    </label>
+                    <label class="layer-toggle">
+                        <input type="checkbox" id="transport-layer">
+                        <span>Densidade de Transporte</span>
+                    </label>
+                </div>
+                
+                <div class="location-info">
+                    <div id="location-status">
+                        <span class="status-indicator" id="air-status"></span>
+                        <span id="location-text">Clique em uma região para ver detalhes</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <button class="quiz-btn" onclick="showQuiz()">
+            Ir para o Quiz
+        </button>
+    </section>
+
+    <!-- Quiz -->
+    <section id="quiz-screen" class="screen">
+        <div class="quiz-header">
+            <h2>AirQuest Challenge</h2>
+            <button class="back-btn" onclick="showGlobe()">← Voltar</button>
+        </div>
+        
+        <div class="quiz-container">
+            <div class="quiz-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="quiz-progress"></div>
+                </div>
+                <span id="question-counter">1 de 5</span>
+            </div>
+            
+            <div class="question-container">
+                <div class="question" id="question-text"></div>
+                <div class="answers" id="answers-container"></div>
+            </div>
+            
+            <div class="quiz-feedback" id="quiz-feedback"></div>
+        </div>
+        
+        <div class="quiz-results" id="quiz-results" style="display: none;">
+            <h3>Parabéns! Você completou o AirQuest Challenge!</h3>
+            <div class="score-display">
+                <div class="medal" id="medal-display">🥉</div>
+                <div class="score-text">
+                    <span id="final-score">0</span> pontos
+                </div>
+            </div>
+            <div class="ranking-info">
+                <p>Seu ranking: <span id="user-ranking">-</span></p>
+            </div>
+            <button class="restart-quiz" onclick="restartQuiz()">Jogar Novamente</button>
+        </div>
+    </section>
+
+    <!-- NASA Data Sources -->
+    <div class="nasa-sources">
+        <button class="sources-btn" onclick="toggleSources()">De onde vêm os dados?</button>
+        <div class="sources-content" id="sources-content">
+            <h4>Fontes de Dados da NASA</h4>
+            <ul>
+                <li><strong>NASA TEMPO:</strong> Poluentes atmosféricos em tempo real</li>
+                <li><strong>NASA GIBS:</strong> Camadas globais de satélite</li>
+                <li><strong>NASA POWER API:</strong> Dados climáticos e atmosféricos</li>
+                <li><strong>OpenAQ:</strong> Monitoramento em tempo real por governos locais</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
