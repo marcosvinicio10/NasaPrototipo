@@ -75,7 +75,7 @@
     <!-- Globo 3D Interativo -->
     <section id="globe-screen" class="screen">
         <div class="globe-header">
-            <h2>Planeta Terra - Qualidade do Ar em Tempo Real</h2>
+            <h2>🌍 Planeta Terra - Dados Ambientais Globais</h2>
             <button class="back-btn" onclick="showHome()">← Voltar</button>
         </div>
         
@@ -83,30 +83,86 @@
             <canvas id="globe-canvas"></canvas>
             
             <div class="globe-controls">
+                <div class="heatmap-controls">
+                    <h3>🔥 Mapa de Calor Global</h3>
+                    <div class="heatmap-buttons">
+                        <button class="heatmap-btn active" id="heatmap-aqi">
+                            🌬️ AQI
+                        </button>
+                        <button class="heatmap-btn" id="heatmap-pollutants">
+                            ☁️ Poluentes
+                        </button>
+                        <button class="heatmap-btn" id="heatmap-fires">
+                            🔥 Queimadas
+                        </button>
+                        <button class="heatmap-btn" id="heatmap-temperature">
+                            🌡️ Temperatura
+                        </button>
+                        <button class="heatmap-btn" id="heatmap-humidity">
+                            💧 Umidade
+                        </button>
+                    </div>
+                </div>
+                
                 <div class="data-layers">
-                    <h3>Camadas de Dados</h3>
-                    <label class="layer-toggle">
-                        <input type="checkbox" id="aqi-layer" checked>
-                        <span>AQI (Índice de Qualidade do Ar)</span>
-                    </label>
-                    <label class="layer-toggle">
-                        <input type="checkbox" id="pollutants-layer">
-                        <span>Poluentes (MP2.5, NO₂, O₃)</span>
-                    </label>
-                    <label class="layer-toggle">
-                        <input type="checkbox" id="fires-layer">
-                        <span>Queimadas (Focos Ativos)</span>
-                    </label>
-                    <label class="layer-toggle">
-                        <input type="checkbox" id="transport-layer">
-                        <span>Densidade de Transporte</span>
-                    </label>
+                    <h3>🌍 Camadas de Dados Globais</h3>
+                    <div class="layer-category">
+                        <h4>📊 Qualidade do Ar</h4>
+                        <label class="layer-toggle">
+                            <input type="checkbox" id="aqi-layer" checked>
+                            <span>AQI (Índice de Qualidade do Ar)</span>
+                        </label>
+                        <label class="layer-toggle">
+                            <input type="checkbox" id="pollutants-layer">
+                            <span>Poluentes (MP2.5, NO₂, O₃, CO)</span>
+                        </label>
+                    </div>
+                    
+                    <div class="layer-category">
+                        <h4>🔥 Eventos Ambientais</h4>
+                        <label class="layer-toggle">
+                            <input type="checkbox" id="fires-layer">
+                            <span>Queimadas (Focos Ativos)</span>
+                        </label>
+                    </div>
+                    
+                    <div class="layer-category">
+                        <h4>🌡️ Condições Climáticas</h4>
+                        <label class="layer-toggle">
+                            <input type="checkbox" id="temperature-layer">
+                            <span>Temperatura Global</span>
+                        </label>
+                        <label class="layer-toggle">
+                            <input type="checkbox" id="humidity-layer">
+                            <span>Umidade Relativa</span>
+                        </label>
+                    </div>
                 </div>
                 
                 <div class="location-info">
                     <div id="location-status">
                         <span class="status-indicator" id="air-status"></span>
                         <span id="location-text">Clique em uma região para ver detalhes</span>
+                    </div>
+                </div>
+                
+                <div class="data-legend">
+                    <h4>🎨 Legenda de Cores</h4>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #00ff88;"></span>
+                        <span>Bom/Confortável</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #ffaa00;"></span>
+                        <span>Moderado</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #ff6600;"></span>
+                        <span>Insalubre</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #ff4444;"></span>
+                        <span>Perigoso</span>
                     </div>
                 </div>
             </div>
