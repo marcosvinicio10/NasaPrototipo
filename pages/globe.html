@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Globo 3D - AirQuest</title>
+    <link rel="stylesheet" href="../styles/base.css">
+    <link rel="stylesheet" href="../styles/globe.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Globo 3D Interativo -->
+    <section class="fullscreen-globe">
+        <canvas id="globe-canvas"></canvas>
+        
+        <div class="floating-panels">
+            <div class="floating-back-btn">
+                <a href="home.html" class="back-btn">
+                    <span class="icon">←</span>
+                    <span class="text">Voltar</span>
+                </a>
+            </div>
+            
+            <div class="main-control-panel">
+                <div class="panel-header">
+                    <h3>🌍 AirQuest Global</h3>
+                    <p>Dados Ambientais em Tempo Real</p>
+                </div>
+                
+                <div class="control-sections">
+                    <div class="heatmap-section">
+                        <h4>🔥 Mapa de Calor</h4>
+                        <div class="heatmap-buttons">
+                            <button class="heatmap-btn active" id="heatmap-aqi">
+                                <span class="icon">🌬️</span>
+                                <span class="label">AQI</span>
+                            </button>
+                            <button class="heatmap-btn" id="heatmap-pollutants">
+                                <span class="icon">☁️</span>
+                                <span class="label">Poluentes</span>
+                            </button>
+                            <button class="heatmap-btn" id="heatmap-fires">
+                                <span class="icon">🔥</span>
+                                <span class="label">Queimadas</span>
+                            </button>
+                            <button class="heatmap-btn" id="heatmap-temperature">
+                                <span class="icon">🌡️</span>
+                                <span class="label">Temperatura</span>
+                            </button>
+                            <button class="heatmap-btn" id="heatmap-humidity">
+                                <span class="icon">💧</span>
+                                <span class="label">Umidade</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="layers-section">
+                        <h4>🌍 Camadas de Dados</h4>
+                        <div class="layer-toggles">
+                            <label class="layer-toggle">
+                                <input type="checkbox" id="aqi-layer" checked>
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-label">AQI</span>
+                            </label>
+                            <label class="layer-toggle">
+                                <input type="checkbox" id="pollutants-layer">
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-label">Poluentes</span>
+                            </label>
+                            <label class="layer-toggle">
+                                <input type="checkbox" id="fires-layer">
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-label">Queimadas</span>
+                            </label>
+                            <label class="layer-toggle">
+                                <input type="checkbox" id="temperature-layer">
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-label">Temperatura</span>
+                            </label>
+                            <label class="layer-toggle">
+                                <input type="checkbox" id="humidity-layer">
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-label">Umidade</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="info-panel">
+                <div class="info-header">
+                    <h4>📊 Dados Atuais</h4>
+                </div>
+                <div class="info-content">
+                    <div class="data-item">
+                        <span class="data-label">Região:</span>
+                        <span class="data-value" id="current-region">Selecione um ponto</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">AQI:</span>
+                        <span class="data-value" id="current-aqi">--</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">Temperatura:</span>
+                        <span class="data-value" id="current-temp">--</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">Última atualização:</span>
+                        <span class="data-value" id="last-update">--</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="legend-panel">
+                <div class="legend-header">
+                    <h4>🎨 Legenda</h4>
+                </div>
+                <div class="legend-content" id="legend-content">
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #00ff88;"></span>
+                        <span>Bom</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #ffaa00;"></span>
+                        <span>Moderado</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #ff6600;"></span>
+                        <span>Insalubre</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #ff4444;"></span>
+                        <span>Perigoso</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="../scripts/globe-script.js"></script>
+</body>
+</html>
