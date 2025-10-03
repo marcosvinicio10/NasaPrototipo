@@ -121,3 +121,4 @@ Globo de fallback criado com sucesso
 - 🔄 **Funcionamento**: Garantido
 
 **Agora o globo deve aparecer sempre, mesmo se a textura da NASA falhar!** 🌍✨
+

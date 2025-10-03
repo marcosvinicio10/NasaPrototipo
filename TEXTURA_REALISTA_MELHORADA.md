@@ -141,3 +141,4 @@ Verificar mensagens:
 - **FPS**: 60fps mantido
 
 **Agora o globo deve ter textura realista da NASA ou fallback de alta qualidade!** 🌍✨
+

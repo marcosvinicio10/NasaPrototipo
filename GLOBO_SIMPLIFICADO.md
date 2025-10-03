@@ -180,3 +180,4 @@ if (this.isMobile) {
 - **Manutenibilidade**: Código simples e claro
 
 **O globo agora é simples, eficiente e com textura realista da Terra!** 🌍✨
+

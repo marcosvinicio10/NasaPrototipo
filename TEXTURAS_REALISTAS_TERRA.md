@@ -191,3 +191,4 @@ loader.load(url,
 - **Qualidade**: HD em desktop, otimizada em mobile
 
 **A Terra agora tem texturas realistas da NASA com animações suaves e efeitos visuais impressionantes!** 🌍✨
+
