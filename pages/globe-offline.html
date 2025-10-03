@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Globo 3D - AirQuest</title>
+    <link rel="stylesheet" href="../styles/base.css">
+    <link rel="stylesheet" href="../styles/globe.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Globo 3D Interativo -->
+    <section class="fullscreen-globe">
+        <canvas id="globe-canvas"></canvas>
+        
+        <div class="floating-panels">
+            <div class="floating-back-btn">
+                <a href="home.html" class="back-btn">
+                    <span class="icon">←</span>
+                    <span class="text">Voltar</span>
+                </a>
+            </div>
+            
+            <!-- Botão do Quiz -->
+            <div class="floating-quiz-btn">
+                <a href="quiz.html" class="quiz-btn">
+                    <span class="icon">🎓</span>
+                    <span class="text">Quiz</span>
+                </a>
+            </div>
+            
+            <div class="main-control-panel">
+                <div class="panel-header">
+                    <h3>🌍 AirQuest Global</h3>
+                    <p>Dados Ambientais em Tempo Real</p>
+                </div>
+                
+                <div class="control-sections">
+                    <!-- Seção de Heatmap -->
+                    <div class="heatmap-section">
+                        <h4>Mapa de Calor</h4>
+                        <div class="heatmap-buttons">
+                            <button id="heatmap-aqi" class="heatmap-btn active">
+                                <span class="icon">🌬️</span>
+                                <span class="label">AQI</span>
+                            </button>
+                            <button id="heatmap-pollutants" class="heatmap-btn">
+                                <span class="icon">☁️</span>
+                                <span class="label">Poluentes</span>
+                            </button>
+                            <button id="heatmap-fires" class="heatmap-btn">
+                                <span class="icon">🔥</span>
+                                <span class="label">Queimadas</span>
+                            </button>
+                            <button id="heatmap-temperature" class="heatmap-btn">
+                                <span class="icon">🌡️</span>
+                                <span class="label">Temperatura</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Seção de Camadas -->
+                    <div class="layers-section">
+                        <h4>Camadas de Dados</h4>
+                        <div class="layer-toggles">
+                            <div class="layer-toggle">
+                                <input type="checkbox" id="layer-aqi" checked>
+                                <div class="toggle-slider"></div>
+                                <label for="layer-aqi" class="toggle-label">Qualidade do Ar</label>
+                            </div>
+                            <div class="layer-toggle">
+                                <input type="checkbox" id="layer-fires" checked>
+                                <div class="toggle-slider"></div>
+                                <label for="layer-fires" class="toggle-label">Queimadas</label>
+                            </div>
+                            <div class="layer-toggle">
+                                <input type="checkbox" id="layer-weather" checked>
+                                <div class="toggle-slider"></div>
+                                <label for="layer-weather" class="toggle-label">Meteorologia</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Painel de Informações -->
+            <div class="info-panel">
+                <div class="info-header">
+                    <h4>📊 Dados Atuais</h4>
+                </div>
+                <div class="info-content">
+                    <div class="data-item">
+                        <span class="data-label">Região:</span>
+                        <span class="data-value" id="current-region">São Paulo, Brasil</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">AQI:</span>
+                        <span class="data-value" id="current-aqi">85</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">Temperatura:</span>
+                        <span class="data-value" id="current-temp">28°C</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">Última Atualização:</span>
+                        <span class="data-value" id="last-update">12:34:56</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Painel de Legenda -->
+            <div class="legend-panel">
+                <div class="legend-header">
+                    <h4>🎨 Legenda</h4>
+                </div>
+                <div class="legend-content">
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #00ff88;"></span>
+                        <span>Bom</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #ffaa00;"></span>
+                        <span>Moderado</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #ff6600;"></span>
+                        <span>Insalubre</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #ff4444;"></span>
+                        <span>Perigoso</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Three.js e OrbitControls embarcados -->
+    <script>
+        // OrbitControls embarcado (versão simplificada)
+        THREE.OrbitControls = function (object, domElement) {
+            this.object = object;
+            this.domElement = domElement;
+            
+            this.enableDamping = true;
+            this.dampingFactor = 0.05;
+            this.enableZoom = true;
+            this.enablePan = false;
+            this.minDistance = 1.5;
+            this.maxDistance = 3.0;
+            
+            this.rotateSpeed = 1.0;
+            this.zoomSpeed = 1.0;
+            
+            this.spherical = new THREE.Spherical();
+            this.sphericalDelta = new THREE.Spherical();
+            
+            this.scale = 1;
+            this.panOffset = new THREE.Vector3();
+            this.zoomChanged = false;
+            
+            this.rotateStart = new THREE.Vector2();
+            this.rotateEnd = new THREE.Vector2();
+            this.rotateDelta = new THREE.Vector2();
+            
+            this.zoomStart = new THREE.Vector2();
+            this.zoomEnd = new THREE.Vector2();
+            this.zoomDelta = new THREE.Vector2();
+            
+            this.panStart = new THREE.Vector2();
+            this.panEnd = new THREE.Vector2();
+            this.panDelta = new THREE.Vector2();
+            
+            this.update();
+            
+            // Event listeners
+            this.domElement.addEventListener('mousedown', this.onMouseDown.bind(this), false);
+            this.domElement.addEventListener('mousemove', this.onMouseMove.bind(this), false);
+            this.domElement.addEventListener('mouseup', this.onMouseUp.bind(this), false);
+            this.domElement.addEventListener('wheel', this.onMouseWheel.bind(this), false);
+        };
+        
+        THREE.OrbitControls.prototype = {
+            update: function() {
+                const offset = new THREE.Vector3();
+                const quat = new THREE.Quaternion().setFromUnitVectors(this.object.up, new THREE.Vector3(0, 1, 0));
+                const quatInverse = quat.clone().invert();
+                
+                const lastPosition = new THREE.Vector3();
+                const lastQuaternion = new THREE.Quaternion();
+                
+                return function update() {
+                    const position = this.object.position;
+                    
+                    offset.copy(position).sub(this.target);
+                    offset.applyQuaternion(quat);
+                    
+                    this.spherical.setFromVector3(offset);
+                    
+                    this.spherical.theta += this.sphericalDelta.theta;
+                    this.spherical.phi += this.sphericalDelta.phi;
+                    
+                    this.spherical.theta = Math.max(0, Math.min(Math.PI, this.spherical.theta));
+                    this.spherical.makeSafe();
+                    
+                    this.spherical.radius *= this.scale;
+                    this.spherical.radius = Math.max(this.minDistance, Math.min(this.maxDistance, this.spherical.radius));
+                    
+                    offset.setFromSpherical(this.spherical);
+                    offset.applyQuaternion(quatInverse);
+                    
+                    position.copy(this.target).add(offset);
+                    this.object.lookAt(this.target);
+                    
+                    if (this.enableDamping === true) {
+                        this.sphericalDelta.theta *= (1 - this.dampingFactor);
+                        this.sphericalDelta.phi *= (1 - this.dampingFactor);
+                    } else {
+                        this.sphericalDelta.set(0, 0, 0);
+                    }
+                    
+                    this.scale = 1;
+                    
+                    if (lastPosition.distanceTo(this.object.position) > 0 || lastQuaternion.distanceTo(this.object.quaternion) > 0) {
+                        this.dispatchEvent({ type: 'change' });
+                        lastPosition.copy(this.object.position);
+                        lastQuaternion.copy(this.object.quaternion);
+                    }
+                };
+            }(),
+            
+            onMouseDown: function(event) {
+                if (event.button === 0) {
+                    this.rotateStart.set(event.clientX, event.clientY);
+                }
+            },
+            
+            onMouseMove: function(event) {
+                if (event.button === 0) {
+                    this.rotateEnd.set(event.clientX, event.clientY);
+                    this.rotateDelta.subVectors(this.rotateEnd, this.rotateStart).multiplyScalar(this.rotateSpeed);
+                    
+                    this.sphericalDelta.theta -= 2 * Math.PI * this.rotateDelta.x / this.domElement.clientHeight;
+                    this.sphericalDelta.phi -= 2 * Math.PI * this.rotateDelta.y / this.domElement.clientHeight;
+                    
+                    this.rotateStart.copy(this.rotateEnd);
+                }
+            },
+            
+            onMouseUp: function(event) {
+                // Nada a fazer
+            },
+            
+            onMouseWheel: function(event) {
+                if (this.enableZoom === false) return;
+                
+                event.preventDefault();
+                
+                if (event.deltaY < 0) {
+                    this.scale *= 0.95;
+                } else if (event.deltaY > 0) {
+                    this.scale *= 1.05;
+                }
+            }
+        };
+        
+        // Adicionar EventDispatcher
+        THREE.EventDispatcher.prototype.apply(THREE.OrbitControls.prototype);
+    </script>
+    
+    <!-- Scripts da aplicação -->
+    <script src="../scripts/nasa-data-integration.js"></script>
+    <script src="../scripts/globe-script.js"></script>
+</body>
+</html>
+
+
