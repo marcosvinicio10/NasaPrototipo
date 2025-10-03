@@ -12,33 +12,8 @@ let isLoading = true;
 let currentDataType = 'all'; // 'all', 'monitoring', 'station', 'observatory', 'satellite'
 let currentDisplayData = 'co2'; // 'co2', 'temperature', 'ozone', 'humidity', 'pressure'
 let dataPoints = [];
-let dataLabels = []; // Labels flutuantes
 
-// APIs e fontes de dados atmosféricos
-const dataSources = {
-    nasa: {
-        ozone: 'https://neo.gsfc.nasa.gov/archive/png/OZONE_M/',
-        co2: 'https://neo.gsfc.nasa.gov/archive/png/AIRS_CO2_M/',
-        temperature: 'https://neo.gsfc.nasa.gov/archive/png/MOD_LSTD_M/',
-        airQuality: 'https://neo.gsfc.nasa.gov/archive/png/AIRS_CO_M/'
-    },
-    openweather: {
-        current: 'https://api.openweathermap.org/data/2.5/weather',
-        forecast: 'https://api.openweathermap.org/data/2.5/forecast'
-    },
-    noaa: {
-        temperature: 'https://www.ncei.noaa.gov/data/global-summary-of-the-day/',
-        pressure: 'https://www.ncei.noaa.gov/data/global-summary-of-the-day/'
-    }
-};
-
-// Tipos de dados por categoria
-const dataTypes = {
-    monitoring: ['co2', 'temperature', 'humidity', 'pressure', 'airQuality'],
-    station: ['altitude', 'velocity', 'orbit', 'status'],
-    observatory: ['ozone', 'uvIndex', 'radiation', 'atmosphericPressure'],
-    satellite: ['orbit', 'dataRate', 'coverage', 'missionStatus']
-};
+// Configurações removidas - não utilizadas
 
 // Texturas da NASA
 const textures = {
@@ -362,11 +337,16 @@ function createDataPoints() {
         earthMesh.add(line);
     });
     
-    // Carregar dados reais da NASA
-    loadRealTimeData();
+    // Dados simulados para demonstração
     
-    // Criar labels flutuantes
-    createDataLabels();
+    // Criar interfaces flutuantes
+    createFloatingInterfaces();
+    
+    // Criar aura atmosférica
+    createAtmosphereAura();
+    
+    // Criar estrelas no céu
+    createStars();
 }
 
 // Filtrar pontos por tipo
@@ -381,6 +361,11 @@ function filterDataPointsByType(type) {
                 // Também esconder/mostrar linha conectora
                 if (child.userData.parentPoint) {
                     child.visible = shouldShow;
+                }
+                
+                // Esconder/mostrar interface flutuante
+                if (child.userData.floatingInterface) {
+                    child.userData.floatingInterface.visible = shouldShow;
                 }
             }
         });
@@ -416,100 +401,13 @@ function updateMenuButtons() {
 // Alternar tipo de dado exibido
 function toggleDisplayData(displayType) {
     currentDisplayData = displayType;
-    updateDataLabels();
     updateMenuButtons();
+    updateFloatingInterfaces();
 }
 
-// Carregar dados reais da NASA
-async function loadRealTimeData() {
-    try {
-        // Tentar carregar dados de múltiplas fontes
-        await Promise.all([
-            loadNasaData(),
-            loadWeatherData(),
-            loadAtmosphericData()
-        ]);
-        
-        // Atualizar dados dos pontos com informações reais
-        updateDataPointsWithRealData();
-        
-    } catch (error) {
-        console.warn('Erro ao carregar dados externos, usando dados simulados:', error);
-        // Usar dados simulados se as APIs falharem
-        updateDataPointsWithSimulatedData();
-    }
-}
+// Funções de carregamento de dados reais removidas - não utilizadas
 
-// Carregar dados da NASA
-async function loadNasaData() {
-    try {
-        // Dados de ozônio da NASA
-        const ozoneResponse = await fetch('https://neo.gsfc.nasa.gov/archive/png/OZONE_M/OZONE_M_2024-09-01.png');
-        if (ozoneResponse.ok) {
-            console.log('Dados de ozônio da NASA carregados');
-        }
-    } catch (error) {
-        console.warn('Erro ao carregar dados de ozônio da NASA:', error);
-    }
-}
-
-// Carregar dados meteorológicos
-async function loadWeatherData() {
-    try {
-        // Dados meteorológicos de diferentes cidades
-        const cities = [
-            { lat: 40.7, lon: -74.0, name: 'Nova York' },
-            { lat: 35.7, lon: 139.7, name: 'Tóquio' },
-            { lat: 52.5, lon: 13.4, name: 'Berlim' },
-            { lat: -3.1, lon: -60.0, name: 'Manaus' }
-        ];
-        
-        for (const city of cities) {
-            try {
-                const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${city.lat}&lon=${city.lon}&appid=demo&units=metric`);
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log(`Dados meteorológicos de ${city.name}:`, data);
-                }
-            } catch (error) {
-                console.warn(`Erro ao carregar dados de ${city.name}:`, error);
-            }
-        }
-    } catch (error) {
-        console.warn('Erro ao carregar dados meteorológicos:', error);
-    }
-}
-
-// Carregar dados atmosféricos
-async function loadAtmosphericData() {
-    try {
-        // Dados atmosféricos de diferentes fontes
-        const atmosphericData = {
-            co2Global: 421, // ppm (dados reais de 2024)
-            ozoneHole: 23.4, // milhões de km²
-            globalTemperature: 14.8, // °C
-            seaLevelRise: 3.4 // mm/ano
-        };
-        
-        console.log('Dados atmosféricos globais:', atmosphericData);
-    } catch (error) {
-        console.warn('Erro ao carregar dados atmosféricos:', error);
-    }
-}
-
-// Atualizar pontos com dados reais
-function updateDataPointsWithRealData() {
-    if (earthMesh) {
-        earthMesh.traverse((child) => {
-            if (child.userData && child.userData.name) {
-                const point = child.userData;
-                
-                // Gerar dados específicos baseados no tipo e localização
-                point.data = generateStationData(point);
-            }
-        });
-    }
-}
+// Função updateDataPointsWithRealData removida - não utilizada
 
 // Gerar dados específicos para cada estação
 function generateStationData(point) {
@@ -597,45 +495,80 @@ function getAirQualityIndex(co2) {
     return 'Muito Ruim';
 }
 
-// Criar labels flutuantes para dados
-function createDataLabels() {
+// Obter status da qualidade do ar com cores
+function getAirQualityStatus(data) {
+    const baseData = getBaseDataForLocation(data.lat, data.lon);
+    const co2 = Math.floor(Math.random() * 20 + baseData.co2Base);
+    
+    if (co2 < 400) {
+        return { status: '🟢 Excelente', color: '#4CAF50' };
+    } else if (co2 < 420) {
+        return { status: '🟡 Bom', color: '#8BC34A' };
+    } else if (co2 < 450) {
+        return { status: '🟠 Moderado', color: '#FF9800' };
+    } else if (co2 < 500) {
+        return { status: '🔴 Ruim', color: '#F44336' };
+    } else {
+        return { status: '💀 Muito Ruim', color: '#9C27B0' };
+    }
+}
+
+// Criar interfaces flutuantes em cima dos pontos
+function createFloatingInterfaces() {
     if (earthMesh) {
         earthMesh.traverse((child) => {
             if (child.userData && child.userData.name) {
                 const point = child.userData;
-                const label = createFloatingLabel(point);
-                dataLabels.push(label);
+                const interface = createFloatingInterface(point);
+                child.userData.floatingInterface = interface;
             }
         });
     }
 }
 
-// Criar label flutuante individual
-function createFloatingLabel(point) {
+// Criar interface flutuante individual
+function createFloatingInterface(point) {
     const canvas = document.createElement('canvas');
     canvas.width = 200;
-    canvas.height = 60;
+    canvas.height = 80;
     const ctx = canvas.getContext('2d');
     
-    // Estilo do label
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-    ctx.fillRect(0, 0, 200, 60);
+    // Obter dados específicos
+    const dataValue = getDisplayValue(point, currentDisplayData);
+    const airQuality = getAirQualityStatus(point);
     
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+    // Fundo com gradiente
+    const gradient = ctx.createLinearGradient(0, 0, 0, 80);
+    gradient.addColorStop(0, 'rgba(10, 10, 10, 0.95)');
+    gradient.addColorStop(1, 'rgba(20, 20, 20, 0.95)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 200, 80);
+    
+    // Borda
+    ctx.strokeStyle = airQuality.color;
     ctx.lineWidth = 2;
-    ctx.strokeRect(0, 0, 200, 60);
+    ctx.strokeRect(1, 1, 198, 78);
     
-    // Texto
+    // Título (tipo de dado)
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 12px Arial';
+    ctx.font = 'bold 12px Inter, sans-serif';
     ctx.textAlign = 'center';
+    ctx.fillText(getDataTypeLabel(currentDisplayData), 100, 18);
     
-    const displayValue = getDisplayValue(point, currentDisplayData);
-    ctx.fillText(displayValue, 100, 25);
+    // Valor do dado
+    ctx.fillStyle = airQuality.color;
+    ctx.font = 'bold 16px Inter, sans-serif';
+    ctx.fillText(dataValue, 100, 38);
     
-    ctx.font = '10px Arial';
-    ctx.fillStyle = '#4CAF50';
-    ctx.fillText(point.name, 100, 40);
+    // Status da qualidade do ar
+    ctx.fillStyle = '#d0d0d0';
+    ctx.font = '11px Inter, sans-serif';
+    ctx.fillText(airQuality.status, 100, 55);
+    
+    // Nome da estação
+    ctx.fillStyle = '#a0a0a0';
+    ctx.font = '10px Inter, sans-serif';
+    ctx.fillText(point.name, 100, 70);
     
     // Criar textura
     const texture = new THREE.CanvasTexture(canvas);
@@ -646,7 +579,7 @@ function createFloatingLabel(point) {
     });
     
     const sprite = new THREE.Sprite(material);
-    sprite.scale.set(0.3, 0.1, 1);
+    sprite.scale.set(0.4, 0.16, 1);
     sprite.userData = { parentPoint: point };
     
     // Posicionar acima do ponto
@@ -660,10 +593,160 @@ function createFloatingLabel(point) {
     }
     
     sprite.position.copy(pointPosition);
-    sprite.position.y += 0.2; // Acima do ponto
+    sprite.position.y += 0.3; // Acima do ponto
     
     earthMesh.add(sprite);
     return sprite;
+}
+
+// Obter label do tipo de dado
+function getDataTypeLabel(dataType) {
+    const labels = {
+        'co2': '🌫️ CO₂',
+        'temperature': '🌡️ Temperatura',
+        'ozone': '🛡️ Ozônio',
+        'humidity': '💧 Umidade',
+        'pressure': '📈 Pressão'
+    };
+    return labels[dataType] || '📊 Dados';
+}
+
+// Atualizar interfaces flutuantes
+function updateFloatingInterfaces() {
+    if (earthMesh) {
+        earthMesh.traverse((child) => {
+            if (child.userData && child.userData.floatingInterface) {
+                const interface = child.userData.floatingInterface;
+                const point = child.userData;
+                
+                // Recriar interface com novos dados
+                const canvas = document.createElement('canvas');
+                canvas.width = 200;
+                canvas.height = 80;
+                const ctx = canvas.getContext('2d');
+                
+                // Obter dados específicos
+                const dataValue = getDisplayValue(point, currentDisplayData);
+                const airQuality = getAirQualityStatus(point);
+                
+                // Fundo com gradiente
+                const gradient = ctx.createLinearGradient(0, 0, 0, 80);
+                gradient.addColorStop(0, 'rgba(10, 10, 10, 0.95)');
+                gradient.addColorStop(1, 'rgba(20, 20, 20, 0.95)');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, 200, 80);
+                
+                // Borda
+                ctx.strokeStyle = airQuality.color;
+                ctx.lineWidth = 2;
+                ctx.strokeRect(1, 1, 198, 78);
+                
+                // Título (tipo de dado)
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 12px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(getDataTypeLabel(currentDisplayData), 100, 18);
+                
+                // Valor do dado
+                ctx.fillStyle = airQuality.color;
+                ctx.font = 'bold 16px Inter, sans-serif';
+                ctx.fillText(dataValue, 100, 38);
+                
+                // Status da qualidade do ar
+                ctx.fillStyle = '#d0d0d0';
+                ctx.font = '11px Inter, sans-serif';
+                ctx.fillText(airQuality.status, 100, 55);
+                
+                // Nome da estação
+                ctx.fillStyle = '#a0a0a0';
+                ctx.font = '10px Inter, sans-serif';
+                ctx.fillText(point.name, 100, 70);
+                
+                // Atualizar textura
+                const texture = new THREE.CanvasTexture(canvas);
+                interface.material.map = texture;
+                interface.material.needsUpdate = true;
+            }
+        });
+    }
+}
+
+// Criar aura atmosférica ao redor do planeta
+function createAtmosphereAura() {
+    // Geometria da esfera atmosférica (um pouco maior que a Terra)
+    const atmosphereGeometry = new THREE.SphereGeometry(1.05, 32, 32);
+    
+    // Material da atmosfera com transparência
+    const atmosphereMaterial = new THREE.MeshPhongMaterial({
+        color: 0x87CEEB, // Azul céu
+        transparent: true,
+        opacity: 0.3,
+        side: THREE.BackSide, // Renderizar apenas o lado interno
+        shininess: 100,
+        specular: new THREE.Color(0x444444)
+    });
+    
+    // Criar mesh da atmosfera
+    const atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
+    atmosphere.name = 'atmosphere';
+    scene.add(atmosphere);
+    
+    // Adicionar efeito de brilho
+    const glowGeometry = new THREE.SphereGeometry(1.08, 32, 32);
+    const glowMaterial = new THREE.MeshBasicMaterial({
+        color: 0x87CEEB,
+        transparent: true,
+        opacity: 0.1,
+        side: THREE.BackSide
+    });
+    
+    const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+    glow.name = 'atmosphereGlow';
+    scene.add(glow);
+    
+    console.log('✅ Aura atmosférica criada com sucesso');
+}
+
+// Criar estrelas no céu
+function createStars() {
+    const starGeometry = new THREE.BufferGeometry();
+    const starCount = 2000;
+    const positions = new Float32Array(starCount * 3);
+    const colors = new Float32Array(starCount * 3);
+    
+    for (let i = 0; i < starCount; i++) {
+        // Posições aleatórias em uma esfera grande
+        const radius = 50 + Math.random() * 100;
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(2 * Math.random() - 1);
+        
+        positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+        positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+        positions[i * 3 + 2] = radius * Math.cos(phi);
+        
+        // Cores aleatórias das estrelas
+        const color = new THREE.Color();
+        color.setHSL(0.1 + Math.random() * 0.1, 0.5 + Math.random() * 0.5, 0.5 + Math.random() * 0.5);
+        colors[i * 3] = color.r;
+        colors[i * 3 + 1] = color.g;
+        colors[i * 3 + 2] = color.b;
+    }
+    
+    starGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    starGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    
+    const starMaterial = new THREE.PointsMaterial({
+        size: 0.5,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.8
+    });
+    
+    const stars = new THREE.Points(starGeometry, starMaterial);
+    stars.name = 'stars';
+    scene.add(stars);
+    
+    console.log('✅ Estrelas criadas com sucesso');
 }
 
 // Obter valor específico para exibição
@@ -691,19 +774,7 @@ function getDisplayValue(point, dataType) {
     }
 }
 
-// Atualizar labels com novo tipo de dado
-function updateDataLabels() {
-    // Remover labels antigos
-    dataLabels.forEach(label => {
-        if (label.parent) {
-            label.parent.remove(label);
-        }
-    });
-    dataLabels = [];
-    
-    // Criar novos labels
-    createDataLabels();
-}
+// Função updateDataLabels removida - não utilizada
 
 // Atualizar pontos com dados simulados
 function updateDataPointsWithSimulatedData() {
@@ -920,30 +991,7 @@ function createAtmosphere() {
     scene.add(atmosphereMesh);
 }
 
-// Alternar entre ozônio e CO₂
-function toggleAtmosphere() {
-    if (!atmosphereMaterial) return;
-    
-    isOzoneMode = !isOzoneMode;
-    
-    if (isOzoneMode) {
-        if (window.atmosphereTextures && window.atmosphereTextures.ozone) {
-            atmosphereMaterial.map = window.atmosphereTextures.ozone;
-        } else {
-            atmosphereMaterial.color = new THREE.Color(0x00ff00); // Verde para ozônio
-        }
-        document.getElementById('toggleOverlay').textContent = 'Alternar: CO₂';
-    } else {
-        if (window.atmosphereTextures && window.atmosphereTextures.co2) {
-            atmosphereMaterial.map = window.atmosphereTextures.co2;
-        } else {
-            atmosphereMaterial.color = new THREE.Color(0xff6600); // Laranja para CO₂
-        }
-        document.getElementById('toggleOverlay').textContent = 'Alternar: Ozônio';
-    }
-    
-    atmosphereMaterial.needsUpdate = true;
-}
+// Função removida - não mais necessária
 
 // Esconder tela de carregamento
 function hideLoading() {
@@ -956,8 +1004,10 @@ function hideLoading() {
 
 // Configurar event listeners
 function setupEventListeners() {
-    // Botão de alternar overlay
-    document.getElementById('toggleOverlay').addEventListener('click', toggleAtmosphere);
+    // Botão de voltar para página inicial
+    document.getElementById('home-btn').addEventListener('click', () => {
+        window.location.href = '/index.html';
+    });
     
     // Botão do quiz
     document.getElementById('quiz-btn').addEventListener('click', () => {
@@ -995,22 +1045,25 @@ function setupDataPointInteraction() {
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
     
-    // Criar tooltip
+    // Criar tooltip moderno
     const tooltip = document.createElement('div');
     tooltip.id = 'dataTooltip';
     tooltip.style.cssText = `
         position: absolute;
-        background: rgba(0, 0, 0, 0.8);
+        background: rgba(10, 10, 10, 0.95);
         color: white;
-        padding: 10px;
-        border-radius: 5px;
-        font-size: 12px;
+        padding: 16px 20px;
+        border-radius: 12px;
+        font-size: 13px;
         pointer-events: none;
         z-index: 1000;
         display: none;
-        max-width: 200px;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        max-width: 280px;
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        font-family: 'Inter', sans-serif;
+        line-height: 1.5;
     `;
     document.body.appendChild(tooltip);
     
@@ -1027,14 +1080,24 @@ function setupDataPointInteraction() {
         intersects.forEach(intersect => {
             if (intersect.object.userData && intersect.object.userData.name) {
                 const data = intersect.object.userData;
+                const airQuality = getAirQualityStatus(data);
+                
                 tooltip.innerHTML = `
-                    <strong>${data.name}</strong><br>
-                    <small>${data.data}</small><br>
-                    <small>Lat: ${data.lat}° | Lon: ${data.lon}°</small>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                        <div style="width: 8px; height: 8px; border-radius: 50%; background: ${airQuality.color};"></div>
+                        <strong style="color: #ffffff; font-size: 14px;">${data.name}</strong>
+                    </div>
+                    <div style="background: rgba(255, 255, 255, 0.05); padding: 8px; border-radius: 6px; margin-bottom: 8px;">
+                        <div style="color: #4CAF50; font-weight: 600; font-size: 12px; margin-bottom: 4px;">${airQuality.status}</div>
+                        <div style="color: #d0d0d0; font-size: 11px;">${data.data}</div>
+                    </div>
+                    <div style="color: #a0a0a0; font-size: 10px; text-align: center;">
+                        📍 ${data.lat}°N, ${data.lon}°E
+                    </div>
                 `;
                 tooltip.style.display = 'block';
-                tooltip.style.left = (event.clientX + 10) + 'px';
-                tooltip.style.top = (event.clientY - 10) + 'px';
+                tooltip.style.left = (event.clientX + 15) + 'px';
+                tooltip.style.top = (event.clientY - 15) + 'px';
                 found = true;
             }
         });
@@ -1115,26 +1178,60 @@ function animate() {
 
 // Animar pontos de dados
 function animateDataPoints() {
-    // Animar apenas labels flutuantes (pontos ficam fixos)
     if (earthMesh) {
         earthMesh.traverse((child) => {
-            // Animar labels flutuantes
-            if (child.userData && child.userData.parentPoint) {
-                const label = child;
+            // Animar interfaces flutuantes
+            if (child.userData && child.userData.floatingInterface) {
+                const interface = child.userData.floatingInterface;
                 const pointPosition = new THREE.Vector3();
                 
                 // Encontrar posição do ponto pai
                 earthMesh.traverse((pointChild) => {
-                    if (pointChild.userData && pointChild.userData.name === label.userData.parentPoint.name) {
+                    if (pointChild.userData && pointChild.userData.name === child.userData.name) {
                         pointPosition.copy(pointChild.position);
                     }
                 });
                 
-                // Atualizar posição do label
-                label.position.copy(pointPosition);
-                label.position.y += 0.2;
+                // Atualizar posição da interface
+                interface.position.copy(pointPosition);
+                interface.position.y += 0.3;
+                
+                // Fazer a interface sempre olhar para a câmera
+                interface.lookAt(camera.position);
             }
         });
+    }
+    
+    // Animar estrelas (piscar)
+    const stars = scene.getObjectByName('stars');
+    if (stars) {
+        const time = Date.now() * 0.001;
+        stars.rotation.y = time * 0.01;
+        
+        // Fazer algumas estrelas piscarem
+        const positions = stars.geometry.attributes.position.array;
+        const colors = stars.geometry.attributes.color.array;
+        
+        for (let i = 0; i < positions.length; i += 3) {
+            const starIndex = i / 3;
+            const twinkle = Math.sin(time * 2 + starIndex * 0.1) * 0.3 + 0.7;
+            colors[i] *= twinkle;
+            colors[i + 1] *= twinkle;
+            colors[i + 2] *= twinkle;
+        }
+        
+        stars.geometry.attributes.color.needsUpdate = true;
+    }
+    
+    // Animar aura atmosférica
+    const atmosphere = scene.getObjectByName('atmosphere');
+    if (atmosphere) {
+        atmosphere.rotation.y += 0.001;
+    }
+    
+    const atmosphereGlow = scene.getObjectByName('atmosphereGlow');
+    if (atmosphereGlow) {
+        atmosphereGlow.rotation.y -= 0.0005;
     }
 }
 

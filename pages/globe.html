@@ -8,56 +8,51 @@
 </head>
 <body>
     <div id="container">
-        <div id="controls">
-            <div id="main-controls">
-                <button id="toggleOverlay" class="control-btn">Alternar: Ozônio</button>
-                <button id="quiz-btn" class="quiz-btn">🧠 Quiz</button>
+        <!-- Painel Esquerdo - Controles Principais -->
+        <div id="left-panel" class="control-panel">
+            <div class="panel-header">
+                <h3>🎛️ Controles</h3>
             </div>
             
-            <div id="data-management">
-                <h3>🎛️ Gerenciamento de Dados</h3>
-                
-                <div class="control-section">
-                    <h4>📊 Tipo de Dado Exibido:</h4>
-                    <div class="data-display-buttons">
-                        <button class="display-btn active" data-display="co2">🌫️ CO₂</button>
-                        <button class="display-btn" data-display="temperature">🌡️ Temperatura</button>
-                        <button class="display-btn" data-display="ozone">🛡️ Ozônio</button>
-                        <button class="display-btn" data-display="humidity">💧 Umidade</button>
-                        <button class="display-btn" data-display="pressure">📈 Pressão</button>
-                    </div>
-                    <p class="data-explanation">
-                        <strong>CO₂:</strong> Concentração de dióxido de carbono (ppm)<br>
-                        <strong>Temperatura:</strong> Temperatura atmosférica (°C)<br>
-                        <strong>Ozônio:</strong> Níveis de ozônio (DU - Dobson Units)<br>
-                        <strong>Umidade:</strong> Umidade relativa do ar (%)<br>
-                        <strong>Pressão:</strong> Pressão atmosférica (hPa)
-                    </p>
+                   <div class="main-controls">
+                       <button id="home-btn" class="control-btn">🏠 Página Inicial</button>
+                       <button id="quiz-btn" class="quiz-btn">🧠 Quiz</button>
+                   </div>
+            
+            <div class="control-section">
+                <h4>📊 Tipo de Dado:</h4>
+                <div class="data-display-buttons">
+                    <button class="display-btn active" data-display="co2">🌫️ CO₂</button>
+                    <button class="display-btn" data-display="temperature">🌡️ Temperatura</button>
+                    <button class="display-btn" data-display="ozone">🛡️ Ozônio</button>
+                    <button class="display-btn" data-display="humidity">💧 Umidade</button>
+                    <button class="display-btn" data-display="pressure">📈 Pressão</button>
                 </div>
-                
-                <div class="control-section">
-                    <h4>🔍 Filtrar Estações:</h4>
-                    <div class="filter-buttons">
-                        <button class="filter-btn active" data-type="all">🌍 Todas</button>
-                        <button class="filter-btn" data-type="monitoring">📊 Monitoramento</button>
-                        <button class="filter-btn" data-type="station">🚀 Estações</button>
-                        <button class="filter-btn" data-type="observatory">🔬 Observatórios</button>
-                        <button class="filter-btn" data-type="satellite">🛰️ Satélites</button>
-                    </div>
-                    <p class="station-explanation">
-                        <strong>Monitoramento:</strong> Estações terrestres coletando dados atmosféricos<br>
-                        <strong>Estações:</strong> Estação Espacial Internacional<br>
-                        <strong>Observatórios:</strong> Estações científicas especializadas<br>
-                        <strong>Satélites:</strong> Satélites da NASA em órbita
-                    </p>
+            </div>
+        </div>
+
+        <!-- Painel Direito - Filtros e Informações -->
+        <div id="right-panel" class="control-panel">
+            <div class="panel-header">
+                <h3>🔍 Filtros</h3>
+            </div>
+            
+            <div class="control-section">
+                <h4>🔍 Filtrar Estações:</h4>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-type="all">🌍 Todas</button>
+                    <button class="filter-btn" data-type="monitoring">📊 Monitoramento</button>
+                    <button class="filter-btn" data-type="station">🚀 Estações</button>
+                    <button class="filter-btn" data-type="observatory">🔬 Observatórios</button>
+                    <button class="filter-btn" data-type="satellite">🛰️ Satélites</button>
                 </div>
-                
-                <div class="control-section">
-                    <h4>ℹ️ Informações:</h4>
-                    <p style="font-size: 11px; color: #ccc; margin: 5px 0;">
-                        Os dados aparecem automaticamente acima de cada ponto.<br>
-                        Use o mouse para girar e dar zoom no globo.
-                    </p>
+            </div>
+            
+            <div class="control-section">
+                <h4>ℹ️ Informações:</h4>
+                <div class="info-content">
+                    <p>Os dados aparecem automaticamente acima de cada ponto.</p>
+                    <p>Use o mouse para girar e dar zoom no globo.</p>
                 </div>
             </div>
         </div>

@@ -18,100 +18,224 @@ body {
     height: 100vh;
 }
 
-#controls {
+/* Painéis de Controle */
+.control-panel {
     position: absolute;
-    top: 24px;
-    left: 24px;
+    top: 20px;
     z-index: 100;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
     max-width: 320px;
+    width: 100%;
+    background: rgba(10, 10, 10, 0.95);
+    border-radius: 20px;
+    backdrop-filter: blur(25px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 
+        0 20px 40px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(255, 255, 255, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    overflow: hidden;
 }
 
-#main-controls {
-    display: flex;
-    gap: 12px;
+#left-panel {
+    left: 20px;
 }
 
-#data-management {
-    background: rgba(15, 15, 15, 0.95);
-    padding: 24px;
-    border-radius: 16px;
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+#right-panel {
+    right: 20px;
 }
 
-#data-management h3 {
+.panel-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    position: relative;
+}
+
+.panel-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 24px;
+    right: 24px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+}
+
+.panel-header h3 {
     color: #ffffff;
-    margin-bottom: 24px;
-    font-size: 20px;
-    font-weight: 600;
+    font-size: 18px;
+    font-weight: 700;
     text-align: center;
     letter-spacing: -0.5px;
+    margin: 0;
+    background: linear-gradient(135deg, #ffffff, #a0a0a0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
+.main-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px 24px;
+}
+
+.main-controls .control-btn,
+.main-controls .quiz-btn {
+    width: 100%;
+    text-align: center;
+    margin: 0;
+}
+
+/* Seções de Controle */
 .control-section {
-    margin-bottom: 24px;
-    padding: 20px;
-    background: rgba(25, 25, 25, 0.6);
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    margin: 0;
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    position: relative;
+}
+
+.control-section:last-child {
+    border-bottom: none;
+}
+
+.control-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 24px;
+    right: 24px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+}
+
+/* Conteúdo das Seções */
+.info-content {
+    color: #d0d0d0;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.info-content p {
+    margin: 8px 0;
+    color: #b0b0b0;
 }
 
 .control-section h4 {
     color: #ffffff;
     margin-bottom: 16px;
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 700;
     letter-spacing: 0.5px;
+    text-transform: uppercase;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.control-section h4::before {
+    content: '';
+    width: 4px;
+    height: 4px;
+    background: #4CAF50;
+    border-radius: 50%;
+    flex-shrink: 0;
 }
 
 .data-display-buttons, .filter-buttons {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-bottom: 0;
 }
 
 .display-btn, .filter-btn {
-    background: rgba(40, 40, 40, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(30, 30, 30, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     color: #ffffff;
-    padding: 12px 16px;
-    border-radius: 8px;
+    padding: 10px 16px;
+    border-radius: 10px;
     cursor: pointer;
     font-size: 12px;
-    font-weight: 500;
-    transition: all 0.2s ease;
+    font-weight: 600;
+    transition: all 0.3s ease;
     text-align: center;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    width: 100%;
+}
+
+.display-btn::before, .filter-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.display-btn:hover::before, .filter-btn:hover::before {
+    left: 100%;
 }
 
 .display-btn:hover, .filter-btn:hover {
-    background: rgba(60, 60, 60, 0.9);
-    border-color: rgba(255, 255, 255, 0.2);
-    transform: translateY(-1px);
+    background: rgba(50, 50, 50, 0.95);
+    border-color: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
 .display-btn.active, .filter-btn.active {
-    background: rgba(76, 175, 80, 0.2);
-    border-color: rgba(76, 175, 80, 0.5);
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.25), rgba(76, 175, 80, 0.15));
+    border-color: rgba(76, 175, 80, 0.6);
     color: #4CAF50;
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
+    position: relative;
+}
+
+.display-btn.active::after, .filter-btn.active::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), transparent);
+    border-radius: 12px;
+    pointer-events: none;
 }
 
 .display-btn.active:hover, .filter-btn.active:hover {
-    background: rgba(76, 175, 80, 0.3);
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.35), rgba(76, 175, 80, 0.25));
+    box-shadow: 0 0 25px rgba(76, 175, 80, 0.4);
 }
 
 .data-explanation, .station-explanation {
-    font-size: 11px;
-    color: #b0b0b0;
-    line-height: 1.4;
-    margin-top: 12px;
-    padding: 12px;
-    background: rgba(40, 40, 40, 0.3);
-    border-radius: 8px;
-    border-left: 3px solid rgba(76, 175, 80, 0.3);
+    font-size: 12px;
+    color: #d0d0d0;
+    line-height: 1.6;
+    margin-top: 16px;
+    padding: 16px;
+    background: rgba(25, 25, 25, 0.6);
+    border-radius: 12px;
+    border-left: 4px solid rgba(76, 175, 80, 0.5);
+    position: relative;
+    backdrop-filter: blur(10px);
+}
+
+.data-explanation::before, .station-explanation::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, #4CAF50, rgba(76, 175, 80, 0.3));
+    border-radius: 2px;
 }
 
 .data-explanation strong, .station-explanation strong {
@@ -120,51 +244,92 @@ body {
 }
 
 .control-btn {
-    background: rgba(76, 175, 80, 0.15);
-    border: 1px solid rgba(76, 175, 80, 0.3);
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.1));
+    border: 1px solid rgba(76, 175, 80, 0.4);
     color: #4CAF50;
-    padding: 14px 24px;
-    border-radius: 10px;
+    padding: 16px 28px;
+    border-radius: 14px;
     cursor: pointer;
     font-size: 14px;
-    font-weight: 600;
-    transition: all 0.2s ease;
-    backdrop-filter: blur(10px);
+    font-weight: 700;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(15px);
+    position: relative;
+    overflow: hidden;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.control-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.control-btn:hover::before {
+    left: 100%;
 }
 
 .control-btn:hover {
-    background: rgba(76, 175, 80, 0.25);
-    border-color: rgba(76, 175, 80, 0.5);
-    transform: translateY(-1px);
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.3), rgba(76, 175, 80, 0.2));
+    border-color: rgba(76, 175, 80, 0.6);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(76, 175, 80, 0.3);
 }
 
 .control-btn:active {
-    transform: translateY(0);
+    transform: translateY(-1px);
+    box-shadow: 0 5px 15px rgba(76, 175, 80, 0.2);
 }
 
 .quiz-btn {
-    background: rgba(255, 193, 7, 0.15);
-    border: 1px solid rgba(255, 193, 7, 0.3);
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.2), rgba(255, 193, 7, 0.1));
+    border: 1px solid rgba(255, 193, 7, 0.4);
     color: #ffc107;
-    padding: 14px 24px;
-    border-radius: 10px;
+    padding: 16px 28px;
+    border-radius: 14px;
     cursor: pointer;
     font-size: 14px;
-    font-weight: 600;
-    transition: all 0.2s ease;
-    backdrop-filter: blur(10px);
+    font-weight: 700;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(15px);
     margin-left: 12px;
+    position: relative;
+    overflow: hidden;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.quiz-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.quiz-btn:hover::before {
+    left: 100%;
 }
 
 .quiz-btn:hover {
-    background: rgba(255, 193, 7, 0.25);
-    border-color: rgba(255, 193, 7, 0.5);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.3), rgba(255, 193, 7, 0.2));
+    border-color: rgba(255, 193, 7, 0.6);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(255, 193, 7, 0.4);
 }
 
 .quiz-btn:active {
-    transform: translateY(0);
+    transform: translateY(-1px);
+    box-shadow: 0 5px 15px rgba(255, 193, 7, 0.3);
 }
 
 #info {
@@ -290,33 +455,113 @@ body {
 }
 
 /* Responsividade */
-@media (max-width: 768px) {
-    #controls {
-        top: 16px;
+@media (max-width: 1024px) {
+    .control-panel {
+        max-width: 280px;
+    }
+    
+    #left-panel {
         left: 16px;
+    }
+    
+    #right-panel {
         right: 16px;
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-        max-width: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .control-panel {
+        position: fixed;
+        top: 16px;
+        max-width: calc(50vw - 24px);
+        max-height: calc(100vh - 32px);
+        overflow-y: auto;
     }
     
-    .control-btn {
-        padding: 12px 20px;
+    #left-panel {
+        left: 16px;
+    }
+    
+    #right-panel {
+        right: 16px;
+    }
+    
+    .panel-header {
+        padding: 16px 20px 12px;
+    }
+    
+    .panel-header h3 {
+        font-size: 16px;
+    }
+    
+    .main-controls {
+        padding: 16px 20px;
+        gap: 10px;
+    }
+    
+    .control-section {
+        padding: 16px 20px;
+    }
+    
+    .control-section h4 {
         font-size: 13px;
-    }
-    
-    #data-management {
-        padding: 20px;
-        max-width: 300px;
-    }
-    
-    .data-display-buttons, .filter-buttons {
-        grid-template-columns: 1fr;
-        gap: 8px;
+        margin-bottom: 12px;
     }
     
     .display-btn, .filter-btn {
+        padding: 8px 12px;
+        font-size: 11px;
+    }
+    
+    .control-btn, .quiz-btn {
+        padding: 12px 16px;
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .control-panel {
+        top: 12px;
+        max-width: calc(50vw - 16px);
+        max-height: calc(100vh - 24px);
+    }
+    
+    #left-panel {
+        left: 12px;
+    }
+    
+    #right-panel {
+        right: 12px;
+    }
+    
+    .panel-header {
+        padding: 12px 16px 8px;
+    }
+    
+    .panel-header h3 {
+        font-size: 14px;
+    }
+    
+    .main-controls {
+        padding: 12px 16px;
+        gap: 8px;
+    }
+    
+    .control-section {
+        padding: 12px 16px;
+    }
+    
+    .control-section h4 {
+        font-size: 12px;
+        margin-bottom: 10px;
+    }
+    
+    .display-btn, .filter-btn {
+        padding: 6px 10px;
+        font-size: 10px;
+    }
+    
+    .control-btn, .quiz-btn {
         padding: 10px 12px;
         font-size: 11px;
     }
