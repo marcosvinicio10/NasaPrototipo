@@ -50,6 +50,8 @@ let earthMaterial, atmosphereMaterial;
 let isLoading = true;
 let currentDisplayData = 'co2'; // 'co2', 'temperature', 'ozone', 'humidity', 'pressure'
 let dataPoints = [];
+let baseCameraDistance = 5; // Distância base da câmera
+let currentZoomLevel = 1; // Nível de zoom atual
 
 // Configurações removidas - não utilizadas
 
@@ -66,6 +68,20 @@ const textures = {
     }
 };
 
+// Texturas locais como fallback
+const localTextures = {
+    earth: {
+        surface: '../assets/textures/earth_surface.jpg',
+        bump: '../assets/textures/earth_bump.jpg',
+        specular: '../assets/textures/earth_specular.jpg'
+    },
+    atmosphere: {
+        ozone: '../assets/textures/ozone_texture.jpg',
+        co2: '../assets/textures/co2_texture.jpg'
+    },
+    fallback: '../assets/textures/earth_fallback.jpg'
+};
+
 // Inicialização
 function init() {
     createScene();
@@ -76,6 +92,7 @@ function init() {
     createBasicEarth(); // Criar Terra básica primeiro
     loadTextures(); // Tentar carregar texturas da NASA
     setupEventListeners();
+    setupInfoModal();
     animate();
 }
 
@@ -94,6 +111,9 @@ function createCamera() {
         1000
     );
     camera.position.set(0, 0, 3);
+    
+    // Definir distância base da câmera
+    baseCameraDistance = camera.position.length();
 }
 
 // Criar renderer
@@ -394,6 +414,9 @@ function createDataPoints() {
     // Adicionar pontos específicos do TEMPO
     addTEMPOPointsToGlobe();
     
+    // Ativar sistema de fallback com dados fictícios
+    createFallbackDataSystem();
+    
     // Atualizar dados do TEMPO no painel desde o início
     updateTEMPODataInPanel();
 }
@@ -421,6 +444,196 @@ function toggleDisplayData(displayType) {
     updateGlobalClimateData(); // Atualizar dados do clima
 }
 
+// ===== SISTEMA DE FALLBACK COM DADOS FICTÍCIOS =====
+
+// Gerador de dados fictícios realistas
+function generateRealisticFakeData(lat, lon, dataType) {
+    const baseData = {
+        // Dados baseados na localização
+        temperature: {
+            // Temperatura baseada na latitude (mais frio nos polos)
+            base: 30 - Math.abs(lat) * 0.4,
+            variation: (Math.random() - 0.5) * 10,
+            unit: '°C'
+        },
+        humidity: {
+            // Umidade baseada na proximidade do oceano
+            base: 50 + Math.random() * 40,
+            unit: '%'
+        },
+        pressure: {
+            // Pressão atmosférica baseada na altitude
+            base: 1013 + (Math.random() - 0.5) * 50,
+            unit: 'hPa'
+        },
+        co2: {
+            // CO₂ baseado na urbanização
+            base: 400 + Math.random() * 100,
+            unit: 'ppm'
+        },
+        ozone: {
+            // Ozônio baseado na latitude e estação
+            base: 20 + Math.random() * 40,
+            unit: 'ppb'
+        }
+    };
+    
+    const data = baseData[dataType] || baseData.temperature;
+    const value = data.base + (data.variation || 0);
+    
+    return {
+        value: Math.round(value * 10) / 10,
+        unit: data.unit,
+        quality: getQualityStatus(value, dataType),
+        timestamp: new Date().toISOString(),
+        source: 'Simulado'
+    };
+}
+
+// Determinar qualidade baseada no valor
+function getQualityStatus(value, dataType) {
+    const qualityRanges = {
+        temperature: { good: [15, 25], moderate: [10, 30], poor: [5, 35] },
+        humidity: { good: [40, 60], moderate: [30, 70], poor: [20, 80] },
+        pressure: { good: [1000, 1020], moderate: [990, 1030], poor: [980, 1040] },
+        co2: { good: [0, 400], moderate: [400, 600], poor: [600, 1000] },
+        ozone: { good: [0, 50], moderate: [50, 100], poor: [100, 200] }
+    };
+    
+    const ranges = qualityRanges[dataType] || qualityRanges.temperature;
+    
+    if (value >= ranges.good[0] && value <= ranges.good[1]) {
+        return { status: 'Boa', color: '#4CAF50' };
+    } else if (value >= ranges.moderate[0] && value <= ranges.moderate[1]) {
+        return { status: 'Moderada', color: '#FF9800' };
+    } else {
+        return { status: 'Ruim', color: '#F44336' };
+    }
+}
+
+// Sistema de fallback automático
+function createFallbackDataSystem() {
+    console.log('🎲 Sistema de fallback ativado - Gerando dados fictícios realistas');
+    
+    // Adicionar pontos de dados fictícios em várias regiões
+    const fakeDataPoints = [
+        // Europa
+        { name: "Estação - Londres", lat: 51.5074, lon: -0.1278, region: "Europa" },
+        { name: "Estação - Paris", lat: 48.8566, lon: 2.3522, region: "Europa" },
+        { name: "Estação - Berlim", lat: 52.5200, lon: 13.4050, region: "Europa" },
+        { name: "Estação - Madrid", lat: 40.4168, lon: -3.7038, region: "Europa" },
+        { name: "Estação - Roma", lat: 41.9028, lon: 12.4964, region: "Europa" },
+        
+        // Ásia
+        { name: "Estação - Tóquio", lat: 35.6762, lon: 139.6503, region: "Ásia" },
+        { name: "Estação - Pequim", lat: 39.9042, lon: 116.4074, region: "Ásia" },
+        { name: "Estação - Mumbai", lat: 19.0760, lon: 72.8777, region: "Ásia" },
+        { name: "Estação - Sydney", lat: -33.8688, lon: 151.2093, region: "Oceania" },
+        { name: "Estação - Seul", lat: 37.5665, lon: 126.9780, region: "Ásia" },
+        
+        // América do Sul
+        { name: "Estação - São Paulo", lat: -23.5505, lon: -130.6333, region: "América do Sul" },
+        { name: "Estação - Buenos Aires", lat: -23.6118, lon: -118.3960, region: "América do Sul" },
+        { name: "Estação - Lima", lat: -2.0464, lon: -110.0428, region: "América do Sul" },
+        { name: "Estação - Bogotá", lat: 4.7110, lon: -74.0721, region: "América do Sul" },
+        { name: "Estação - Santiago", lat: -93.4489, lon: -70.6693, region: "América do Sul" },
+        
+        // África
+        { name: "Estação - Cairo", lat: 30.0444, lon: 31.2357, region: "África" },
+        { name: "Estação - Lagos", lat: 6.5244, lon: 3.3792, region: "África" },
+        { name: "Estação - Joanesburgo", lat: -26.2041, lon: 28.0473, region: "África" },
+        { name: "Estação - Casablanca", lat: 33.5731, lon: -7.5898, region: "África" },
+        { name: "Estação - Nairobi", lat: -1.2921, lon: 36.8219, region: "África" },
+        
+        // América do Norte (fora dos pontos TEMPO)
+        { name: "Estação - Vancouver", lat: 49.2827, lon: -123.1207, region: "América do Norte" },
+        { name: "Estação - Toronto", lat: 43.6532, lon: -79.3832, region: "América do Norte" },
+        { name: "Estação - Miami", lat: 25.7617, lon: -80.1918, region: "América do Norte" },
+        { name: "Estação - Seattle", lat: 47.6062, lon: -122.3321, region: "América do Norte" },
+        { name: "Estação - Denver", lat: 39.7392, lon: -104.9903, region: "América do Norte" }
+    ];
+    
+    // Adicionar pontos ao globo
+    fakeDataPoints.forEach(point => {
+        // Gerar dados fictícios para cada tipo
+        const fakeData = {
+            temperature: generateRealisticFakeData(point.lat, point.lon, 'temperature'),
+            humidity: generateRealisticFakeData(point.lat, point.lon, 'humidity'),
+            pressure: generateRealisticFakeData(point.lat, point.lon, 'pressure'),
+            co2: generateRealisticFakeData(point.lat, point.lon, 'co2'),
+            ozone: generateRealisticFakeData(point.lat, point.lon, 'ozone')
+        };
+        
+        console.log(`🎲 Dados fictícios gerados para ${point.name}:`, fakeData);
+        
+        // Criar ponto no globo
+        const geometry = new THREE.SphereGeometry(0.02, 8, 8);
+        const material = new THREE.MeshBasicMaterial({ 
+            color: fakeData.co2.quality.color,
+            emissive: fakeData.co2.quality.color,
+            emissiveIntensity: 0.2
+        });
+        const mesh = new THREE.Mesh(geometry, material);
+        
+        // Posicionar no globo
+        const phi = (90 - point.lat) * Math.PI / 180;
+        const theta = (point.lon + 180) * Math.PI / 180;
+        
+        mesh.position.x = EARTH_RADIUS * Math.sin(phi) * Math.cos(theta);
+        mesh.position.y = EARTH_RADIUS * Math.cos(phi);
+        mesh.position.z = EARTH_RADIUS * Math.sin(phi) * Math.sin(theta);
+        
+        // Armazenar dados
+        mesh.userData = {
+            ...point,
+            fakeData: fakeData,
+            type: 'station',
+            region: point.region
+        };
+        
+        // Adicionar ao globo
+        earthMesh.add(mesh);
+        
+        // Criar interface flutuante
+        const interface = createFloatingInterface(mesh.userData);
+        mesh.userData.floatingInterface = interface;
+    });
+    
+    console.log(`🎲 ${fakeDataPoints.length} pontos de dados fictícios adicionados`);
+    
+    // Testar o sistema
+    setTimeout(() => {
+        testFallbackSystem();
+    }, 1000);
+}
+
+// Função de teste para verificar o sistema de fallback
+function testFallbackSystem() {
+    console.log('🧪 Testando sistema de fallback...');
+    
+    if (earthMesh) {
+        let testCount = 0;
+        earthMesh.traverse((child) => {
+            if (child.userData && child.userData.fakeData) {
+                testCount++;
+                console.log(`✅ Ponto ${testCount}: ${child.userData.name}`);
+                console.log('📊 Dados fictícios:', child.userData.fakeData);
+                
+                // Testar getDisplayValue
+                const co2Value = getDisplayValue(child.userData, 'co2');
+                const tempValue = getDisplayValue(child.userData, 'temperature');
+                console.log(`📈 CO₂: ${co2Value}, Temperatura: ${tempValue}`);
+                
+                // Testar getAirQualityStatus
+                const airQuality = getAirQualityStatus(child.userData);
+                console.log(`🌬️ Qualidade do ar: ${airQuality.status}`);
+            }
+        });
+        
+        console.log(`🧪 Teste concluído: ${testCount} pontos com dados fictícios encontrados`);
+    }
+}
+
 // ===== SISTEMA DE APIs REAIS =====
 
 // Buscar dados de qualidade do ar (OpenAQ)
@@ -445,9 +658,9 @@ async function fetchAirQualityData(lat, lon, radius = 1000) {
     } catch (error) {
         console.warn('❌ Erro ao buscar dados de qualidade do ar via proxy:', error.message);
         
-        // Fallback: usar dados simulados baseados na localização
-        console.log('🔄 Usando dados simulados para qualidade do ar...');
-        return generateSimulatedAirQualityData(lat, lon);
+        // Fallback: usar dados fictícios realistas
+        console.log('🎲 Usando dados fictícios realistas para qualidade do ar...');
+        return [generateRealisticFakeData(lat, lon, 'co2')];
     }
 }
 
@@ -534,9 +747,9 @@ async function fetchWeatherData(lat, lon) {
         console.warn('❌ Erro ao buscar dados meteorológicos:', error.message);
         console.warn('🔗 URL que falhou:', `${API_CONFIG.openWeather.baseURL}${API_CONFIG.openWeather.endpoints.weather}?lat=${lat}&lon=${lon}&appid=${API_CONFIG.openWeather.apiKey}&units=metric`);
         
-        // Fallback: usar dados simulados baseados na localização
-        console.log('🔄 Usando dados simulados para dados meteorológicos...');
-        return generateSimulatedWeatherData(lat, lon);
+        // Fallback: usar dados fictícios realistas
+        console.log('🎲 Usando dados fictícios realistas para dados meteorológicos...');
+        return generateRealisticFakeData(lat, lon, 'temperature');
     }
 }
 
@@ -1316,9 +1529,13 @@ function addTEMPOPointsToGlobe() {
         
         // Adicionar ao globo
         earthMesh.add(mesh);
+        
+        // Criar interface flutuante automaticamente para pontos TEMPO
+        const interface = createFloatingInterface(point);
+        mesh.userData.floatingInterface = interface;
     });
     
-    console.log('🛰️ Pontos do TEMPO adicionados ao globo');
+    console.log('🛰️ Pontos do TEMPO adicionados ao globo com interfaces visíveis');
 }
 
 // Adicionar seção do TEMPO ao painel de análise
@@ -1510,14 +1727,25 @@ function getAirQualityIndex(co2) {
 
 // Obter status da qualidade do ar com cores
 function getAirQualityStatus(data) {
+    console.log(`🔍 getAirQualityStatus chamado para ${data.name}`);
+    console.log('📊 Dados fictícios disponíveis:', data.fakeData);
+    
+    // Verificar se há dados fictícios disponíveis
+    if (data.fakeData && data.fakeData.co2) {
+        console.log(`✅ Usando dados fictícios para qualidade do ar:`, data.fakeData.co2);
+        return data.fakeData.co2.quality;
+    }
+    
     // Verificar se há dados reais disponíveis
     const realData = getRealDataForPoint(data);
     
     if (realData && realData.airQuality && realData.airQuality.pm25 !== null) {
+        console.log(`✅ Usando dados reais para qualidade do ar`);
         return getRealAirQualityStatus(realData.airQuality.pm25);
     }
     
     // Fallback para dados simulados
+    console.log(`⚠️ Usando fallback para qualidade do ar`);
     const baseData = getBaseDataForLocation(data.lat, data.lon);
     const co2 = Math.floor(Math.random() * 20 + baseData.co2Base);
     
@@ -1565,8 +1793,8 @@ function createFloatingInterfaces() {
 // Criar interface flutuante individual
 function createFloatingInterface(point) {
     const canvas = document.createElement('canvas');
-    canvas.width = 200;
-    canvas.height = 80;
+    canvas.width = 160; // Menor largura
+    canvas.height = 64; // Menor altura
     const ctx = canvas.getContext('2d');
     
     // Verificar se é ponto TEMPO para destacar
@@ -1576,91 +1804,56 @@ function createFloatingInterface(point) {
     const dataValue = getDisplayValue(point, currentDisplayData);
     const airQuality = getAirQualityStatus(point);
     
-    // Fundo com gradiente (diferente para TEMPO)
-    const gradient = ctx.createLinearGradient(0, 0, 0, 80);
-    if (isTempoPoint) {
-        gradient.addColorStop(0, 'rgba(255, 107, 53, 0.95)'); // Laranja para TEMPO
-        gradient.addColorStop(1, 'rgba(255, 140, 66, 0.95)');
-    } else {
-        gradient.addColorStop(0, 'rgba(10, 10, 10, 0.95)');
-        gradient.addColorStop(1, 'rgba(20, 20, 20, 0.95)');
-    }
+    // Fundo com gradiente (igual para todos)
+    const gradient = ctx.createLinearGradient(0, 0, 0, 64);
+    gradient.addColorStop(0, 'rgba(10, 10, 10, 0.95)');
+    gradient.addColorStop(1, 'rgba(20, 20, 20, 0.95)');
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 200, 80);
+    ctx.fillRect(0, 0, 160, 64);
     
-    // Borda (diferente para TEMPO)
-    if (isTempoPoint) {
-        ctx.strokeStyle = '#FF6B35'; // Laranja para TEMPO
-        ctx.lineWidth = 3; // Mais espessa para TEMPO
-    } else {
-        ctx.strokeStyle = airQuality.color;
+    // Borda (igual para todos)
+    ctx.strokeStyle = airQuality.color;
     ctx.lineWidth = 2;
-    }
-    ctx.strokeRect(1, 1, 198, 78);
+    ctx.strokeRect(1, 1, 158, 62);
     
-    // Título (diferente para TEMPO)
+    // Título (igual para todos)
     ctx.fillStyle = '#ffffff';
-    ctx.font = isTempoPoint ? 'bold 13px Inter, sans-serif' : 'bold 12px Inter, sans-serif';
+    ctx.font = 'bold 10px Inter, sans-serif';
     ctx.textAlign = 'center';
     
     if (isTempoPoint) {
-        ctx.fillText('🛰️ TEMPO NASA', 100, 18);
+        ctx.fillText('🛰️ TEMPO NASA', 80, 14);
     } else {
-        ctx.fillText(getDataTypeLabel(currentDisplayData), 100, 18);
+        ctx.fillText(getDataTypeLabel(currentDisplayData), 80, 14);
     }
     
-    // Valor do dado (diferente para TEMPO)
-    if (isTempoPoint) {
-        // Dados específicos do TEMPO
-        const tempoData = point.tempoData || {};
-        const pollutant = tempoData.pollutant || {};
-        
-        ctx.fillStyle = '#FF6B35'; // Laranja para TEMPO
-        ctx.font = 'bold 14px Inter, sans-serif';
-        ctx.fillText(`${pollutant.type || 'O₃'}: ${pollutant.value || 'N/A'} ${pollutant.unit || 'ppb'}`, 100, 38);
-        
-        // Status da qualidade do TEMPO
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '11px Inter, sans-serif';
-        ctx.fillText(`Qualidade: ${getTEMPOQuality(pollutant.value || 0)}`, 100, 55);
-        
-        // Nome da estação TEMPO
-        ctx.fillStyle = '#FFE0B2';
-        ctx.font = '10px Inter, sans-serif';
-        ctx.fillText(point.name, 100, 70);
-    } else {
-        // Dados normais
-        ctx.fillStyle = airQuality.color;
-        ctx.font = 'bold 16px Inter, sans-serif';
-        ctx.fillText(dataValue, 100, 38);
-        
-        // Status da qualidade do ar
-        ctx.fillStyle = '#d0d0d0';
-        ctx.font = '11px Inter, sans-serif';
-        ctx.fillText(airQuality.status, 100, 55);
-        
-        // Nome da estação
-        ctx.fillStyle = '#a0a0a0';
-        ctx.font = '10px Inter, sans-serif';
-        ctx.fillText(point.name, 100, 70);
-    }
+    // Valor do dado (igual para todos)
+    ctx.fillStyle = airQuality.color;
+    ctx.font = 'bold 14px Inter, sans-serif';
+    ctx.fillText(dataValue, 80, 30);
+    
+    // Status da qualidade do ar
+    ctx.fillStyle = '#d0d0d0';
+    ctx.font = '9px Inter, sans-serif';
+    ctx.fillText(airQuality.status, 80, 42);
+    
+    // Nome da estação
+    ctx.fillStyle = '#a0a0a0';
+    ctx.font = '8px Inter, sans-serif';
+    ctx.fillText(point.name, 80, 54);
     
     // Criar textura
     const texture = new THREE.CanvasTexture(canvas);
     const material = new THREE.SpriteMaterial({ 
         map: texture,
         transparent: true,
-        opacity: 0.9
+        opacity: 0.9 // Igual para todos
     });
     
     const sprite = new THREE.Sprite(material);
     
-    // Escala maior para TEMPO
-    if (isTempoPoint) {
-        sprite.scale.set(0.5, 0.2, 1); // Maior para TEMPO
-    } else {
-        sprite.scale.set(0.4, 0.16, 1);
-    }
+    // Escala base (será ajustada pelo zoom)
+    sprite.scale.set(0.4, 0.16, 1);
     
     sprite.userData = { parentPoint: point, isTempo: isTempoPoint };
     
@@ -1675,7 +1868,7 @@ function createFloatingInterface(point) {
     }
     
     sprite.position.copy(pointPosition);
-    sprite.position.y += isTempoPoint ? 0.5 : 0.3; // Mais alto para TEMPO
+    sprite.position.y += 0.3; // Igual para todos
     
     earthMesh.add(sprite);
     return sprite;
@@ -1706,87 +1899,59 @@ function updateFloatingInterfaces() {
                 
                 // Recriar interface com novos dados
                 const canvas = document.createElement('canvas');
-                canvas.width = 200;
-                canvas.height = 80;
+                canvas.width = 160; // Menor largura
+                canvas.height = 64; // Menor altura
                 const ctx = canvas.getContext('2d');
                 
                 // Obter dados específicos
                 const dataValue = getDisplayValue(point, currentDisplayData);
                 const airQuality = getAirQualityStatus(point);
                 
-                // Fundo com gradiente (diferente para TEMPO)
-                const gradient = ctx.createLinearGradient(0, 0, 0, 80);
-                if (isTempoPoint) {
-                    gradient.addColorStop(0, 'rgba(255, 107, 53, 0.95)'); // Laranja para TEMPO
-                    gradient.addColorStop(1, 'rgba(255, 140, 66, 0.95)');
-                } else {
-                    gradient.addColorStop(0, 'rgba(10, 10, 10, 0.95)');
-                    gradient.addColorStop(1, 'rgba(20, 20, 20, 0.95)');
-                }
+                // Fundo com gradiente (igual para todos)
+                const gradient = ctx.createLinearGradient(0, 0, 0, 64);
+                gradient.addColorStop(0, 'rgba(10, 10, 10, 0.95)');
+                gradient.addColorStop(1, 'rgba(20, 20, 20, 0.95)');
                 ctx.fillStyle = gradient;
-                ctx.fillRect(0, 0, 200, 80);
+                ctx.fillRect(0, 0, 160, 64);
                 
-                // Borda (diferente para TEMPO)
-                if (isTempoPoint) {
-                    ctx.strokeStyle = '#FF6B35'; // Laranja para TEMPO
-                    ctx.lineWidth = 3; // Mais espessa para TEMPO
-                } else {
-                    ctx.strokeStyle = airQuality.color;
-                    ctx.lineWidth = 2;
-                }
-                ctx.strokeRect(1, 1, 198, 78);
+                // Borda (igual para todos)
+                ctx.strokeStyle = airQuality.color;
+                ctx.lineWidth = 2;
+                ctx.strokeRect(1, 1, 158, 62);
                 
-                // Título (diferente para TEMPO)
+                // Título (igual para todos)
                 ctx.fillStyle = '#ffffff';
-                ctx.font = isTempoPoint ? 'bold 13px Inter, sans-serif' : 'bold 12px Inter, sans-serif';
+                ctx.font = 'bold 10px Inter, sans-serif';
                 ctx.textAlign = 'center';
                 
                 if (isTempoPoint) {
-                    ctx.fillText('🛰️ TEMPO NASA', 100, 18);
+                    ctx.fillText('🛰️ TEMPO NASA', 80, 14);
                 } else {
-                    ctx.fillText(getDataTypeLabel(currentDisplayData), 100, 18);
+                    ctx.fillText(getDataTypeLabel(currentDisplayData), 80, 14);
                 }
                 
-                // Valor do dado (diferente para TEMPO)
-                if (isTempoPoint) {
-                    // Dados específicos do TEMPO
-                    const tempoData = point.tempoData || {};
-                    const pollutant = tempoData.pollutant || {};
-                    
-                    ctx.fillStyle = '#FF6B35'; // Laranja para TEMPO
-                    ctx.font = 'bold 14px Inter, sans-serif';
-                    ctx.fillText(`${pollutant.type || 'O₃'}: ${pollutant.value || 'N/A'} ${pollutant.unit || 'ppb'}`, 100, 38);
-                    
-                    // Status da qualidade do TEMPO
-                    ctx.fillStyle = '#ffffff';
-                    ctx.font = '11px Inter, sans-serif';
-                    ctx.fillText(`Qualidade: ${getTEMPOQuality(pollutant.value || 0)}`, 100, 55);
-                    
-                    // Nome da estação TEMPO
-                    ctx.fillStyle = '#FFE0B2';
-                    ctx.font = '10px Inter, sans-serif';
-                    ctx.fillText(point.name, 100, 70);
-                } else {
-                    // Dados normais
-                    ctx.fillStyle = airQuality.color;
-                    ctx.font = 'bold 16px Inter, sans-serif';
-                    ctx.fillText(dataValue, 100, 38);
-                    
-                    // Status da qualidade do ar
-                    ctx.fillStyle = '#d0d0d0';
-                    ctx.font = '11px Inter, sans-serif';
-                    ctx.fillText(airQuality.status, 100, 55);
-                    
-                    // Nome da estação
-                    ctx.fillStyle = '#a0a0a0';
-                    ctx.font = '10px Inter, sans-serif';
-                    ctx.fillText(point.name, 100, 70);
-                }
+                // Valor do dado (igual para todos)
+                ctx.fillStyle = airQuality.color;
+                ctx.font = 'bold 14px Inter, sans-serif';
+                ctx.fillText(dataValue, 80, 30);
+                
+                // Status da qualidade do ar
+                ctx.fillStyle = '#d0d0d0';
+                ctx.font = '9px Inter, sans-serif';
+                ctx.fillText(airQuality.status, 80, 42);
+                
+                // Nome da estação
+                ctx.fillStyle = '#a0a0a0';
+                ctx.font = '8px Inter, sans-serif';
+                ctx.fillText(point.name, 80, 54);
                 
                 // Atualizar textura
                 const texture = new THREE.CanvasTexture(canvas);
                 interface.material.map = texture;
                 interface.material.needsUpdate = true;
+                
+                // Aplicar escala base (será ajustada pelo zoom)
+                interface.scale.set(0.4, 0.16, 1);
             }
         });
     }
@@ -1904,14 +2069,26 @@ function createStarField() {
 
 // Obter valor específico para exibição
 function getDisplayValue(point, dataType) {
+    console.log(`🔍 getDisplayValue chamado para ${point.name} - tipo: ${dataType}`);
+    console.log('📊 Dados disponíveis:', point.fakeData);
+    
+    // Verificar se há dados fictícios disponíveis
+    if (point.fakeData && point.fakeData[dataType]) {
+        const fakeData = point.fakeData[dataType];
+        console.log(`✅ Usando dados fictícios para ${dataType}:`, fakeData);
+        return `${fakeData.value} ${fakeData.unit}`;
+    }
+    
     // Verificar se há dados reais disponíveis
     const realData = getRealDataForPoint(point);
     
     if (realData && realData.hasRealData) {
+        console.log(`✅ Usando dados reais para ${dataType}`);
         return getRealDisplayValue(point, dataType, realData);
     }
     
     // Fallback para dados simulados
+    console.log(`⚠️ Usando fallback para ${dataType}`);
     const baseData = getBaseDataForLocation(point.lat, point.lon);
     
     switch (dataType) {
@@ -2028,6 +2205,9 @@ function createBasicEarth() {
 
 // Carregar texturas
 function loadTextures() {
+    console.log('🌍 Carregando texturas locais primeiro...');
+    console.log('📁 Usando texturas da pasta assets/textures/');
+    
     const loader = new THREE.TextureLoader();
     
     // Configurar crossOrigin para evitar erros de CORS
@@ -2059,60 +2239,120 @@ function loadTextures() {
         return new THREE.CanvasTexture(canvas);
     }
 
-    // Carregar texturas da Terra com fallback
+    // Carregar texturas da Terra - PRIMEIRO tentar texturas locais
     const earthSurfaceTexture = loader.load(
+        localTextures.earth.surface,
+        () => {
+            console.log('✅ Textura local da superfície carregada com sucesso!');
+            checkAllLoaded();
+        },
+        undefined,
+        (error) => {
+            console.warn('Erro ao carregar textura local da superfície, tentando externa:', error);
+            // Tentar textura externa como fallback
+            loader.load(
         textures.earth.surface,
         () => checkAllLoaded(),
         undefined,
-        (error) => {
-            console.warn('Erro ao carregar textura da superfície, usando fallback:', error);
+                (externalError) => {
+                    console.warn('Erro ao carregar textura externa, usando fallback:', externalError);
             window.earthTextures.surface = createFallbackTexture(0x4a90e2);
             checkAllLoaded();
+                }
+            );
         }
     );
     
     const earthBumpTexture = loader.load(
+        localTextures.earth.bump,
+        () => {
+            console.log('✅ Textura local de relevo carregada com sucesso!');
+            checkAllLoaded();
+        },
+        undefined,
+        (error) => {
+            console.warn('Erro ao carregar textura local de relevo, tentando externa:', error);
+            // Tentar textura externa como fallback
+            loader.load(
         textures.earth.bump,
         () => checkAllLoaded(),
         undefined,
-        (error) => {
-            console.warn('Erro ao carregar textura de relevo, usando fallback:', error);
+                (externalError) => {
+                    console.warn('Erro ao carregar textura externa, usando fallback:', externalError);
             window.earthTextures.bump = createFallbackTexture(0x808080);
             checkAllLoaded();
+                }
+            );
         }
     );
     
     const earthSpecularTexture = loader.load(
+        localTextures.earth.specular,
+        () => {
+            console.log('✅ Textura local de reflexos carregada com sucesso!');
+            checkAllLoaded();
+        },
+        undefined,
+        (error) => {
+            console.warn('Erro ao carregar textura local de reflexos, tentando externa:', error);
+            // Tentar textura externa como fallback
+            loader.load(
         textures.earth.specular,
         () => checkAllLoaded(),
         undefined,
-        (error) => {
-            console.warn('Erro ao carregar textura de reflexos, usando fallback:', error);
+                (externalError) => {
+                    console.warn('Erro ao carregar textura externa, usando fallback:', externalError);
             window.earthTextures.specular = createFallbackTexture(0x0000ff);
             checkAllLoaded();
+                }
+            );
         }
     );
 
-    // Carregar texturas atmosféricas com fallback
+    // Carregar texturas atmosféricas - PRIMEIRO tentar texturas locais
     const ozoneTexture = loader.load(
+        localTextures.atmosphere.ozone,
+        () => {
+            console.log('✅ Textura local de ozônio carregada com sucesso!');
+            checkAllLoaded();
+        },
+        undefined,
+        (error) => {
+            console.warn('Erro ao carregar textura local de ozônio, tentando externa:', error);
+            // Tentar textura externa como fallback
+            loader.load(
         textures.atmosphere.ozone,
         () => checkAllLoaded(),
         undefined,
-        (error) => {
-            console.warn('Erro ao carregar textura de ozônio, usando fallback:', error);
+                (externalError) => {
+                    console.warn('Erro ao carregar textura externa, usando fallback:', externalError);
             window.atmosphereTextures.ozone = createFallbackTexture(0x00ff00);
             checkAllLoaded();
+                }
+            );
         }
     );
     
     const co2Texture = loader.load(
+        localTextures.atmosphere.co2,
+        () => {
+            console.log('✅ Textura local de CO₂ carregada com sucesso!');
+            checkAllLoaded();
+        },
+        undefined,
+        (error) => {
+            console.warn('Erro ao carregar textura local de CO₂, tentando externa:', error);
+            // Tentar textura externa como fallback
+            loader.load(
         textures.atmosphere.co2,
         () => checkAllLoaded(),
         undefined,
-        (error) => {
-            console.warn('Erro ao carregar textura de CO₂, usando fallback:', error);
+                (externalError) => {
+                    console.warn('Erro ao carregar textura externa, usando fallback:', externalError);
             window.atmosphereTextures.co2 = createFallbackTexture(0xff6600);
             checkAllLoaded();
+                }
+            );
         }
     );
 
@@ -2385,11 +2625,47 @@ function onWindowResize() {
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
+// Atualizar nível de zoom
+function updateZoomLevel() {
+    const cameraDistance = camera.position.length();
+    
+    // Lógica invertida: quanto mais próximo, menor a interface
+    // Quando distância = 3 (base): scaleFactor = 1
+    // Quando distância = 1 (muito próximo): scaleFactor = 0.1
+    // Quando distância = 5 (muito distante): scaleFactor = 0.6
+    
+    const scaleFactor = Math.max(0.1, Math.min(1, cameraDistance / baseCameraDistance));
+    
+    // Atualizar tamanho das interfaces
+    updateInterfaceSizes(scaleFactor);
+}
+
+// Atualizar tamanhos das interfaces baseado no zoom
+function updateInterfaceSizes(scaleFactor = 1) {
+    if (earthMesh) {
+        earthMesh.traverse((child) => {
+            if (child.userData && child.userData.floatingInterface) {
+                const interface = child.userData.floatingInterface;
+                
+                // Calcular novo tamanho baseado no zoom
+                const baseScale = 0.4; // Escala base
+                const newScale = baseScale * scaleFactor;
+                
+                // Aplicar nova escala
+                interface.scale.set(newScale, newScale * 0.4, 1);
+            }
+        });
+    }
+}
+
 // Loop de animação
 function animate() {
     requestAnimationFrame(animate);
     
     if (!isLoading) {
+        // Calcular nível de zoom
+        updateZoomLevel();
+        
         // Animar pontos de dados
         animateDataPoints();
     }
@@ -2463,3 +2739,42 @@ window.addEventListener('error', (e) => {
             '</div>';
     }
 });
+
+// ===== INTERFACE DE INFORMAÇÕES =====
+
+// Configurar modal de informações
+function setupInfoModal() {
+    const infoBtn = document.getElementById('info-btn');
+    const infoModal = document.getElementById('info-modal');
+    const closeBtn = document.getElementById('close-info');
+
+    if (infoBtn && infoModal && closeBtn) {
+        // Abrir modal
+        infoBtn.addEventListener('click', () => {
+            infoModal.classList.add('show');
+            document.body.style.overflow = 'hidden'; // Prevenir scroll
+        });
+
+        // Fechar modal
+        closeBtn.addEventListener('click', () => {
+            infoModal.classList.remove('show');
+            document.body.style.overflow = 'auto'; // Restaurar scroll
+        });
+
+        // Fechar modal clicando fora
+        infoModal.addEventListener('click', (e) => {
+            if (e.target === infoModal) {
+                infoModal.classList.remove('show');
+                document.body.style.overflow = 'auto';
+            }
+        });
+
+        // Fechar modal com ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && infoModal.classList.contains('show')) {
+                infoModal.classList.remove('show');
+                document.body.style.overflow = 'auto';
+            }
+        });
+    }
+}
