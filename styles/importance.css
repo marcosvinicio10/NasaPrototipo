@@ -934,6 +934,13 @@
     margin-bottom: 3rem;
 }
 
+.community-grid-simple {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
 .community-category {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -1022,6 +1029,38 @@
     text-align: center;
 }
 
+.community-item {
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(0, 212, 255, 0.05));
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    border-radius: 15px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.community-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 30px rgba(0, 212, 255, 0.2);
+}
+
+.community-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.community-item h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #00d4ff;
+}
+
+.community-item p {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #e0e0e0;
+}
+
 .community-call {
     background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05));
     border: 1px solid #22c55e;
@@ -1093,5 +1132,182 @@
     .action-item {
         width: 100%;
         max-width: 300px;
+    }
+}
+
+/* ===== DATA INTERPRETATION GUIDE SECTION ===== */
+.data-guide {
+    padding: 4rem 2rem;
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.05), rgba(0, 150, 255, 0.05));
+    margin: 2rem 0;
+}
+
+.guide-content {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.guide-content h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: #00d4ff;
+}
+
+.guide-intro {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    color: #e0e0e0;
+    text-align: center;
+    margin-bottom: 3rem;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.guide-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.guide-category {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 2rem;
+    backdrop-filter: blur(10px);
+}
+
+.guide-category h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 2rem;
+    color: #00d4ff;
+    text-align: center;
+}
+
+.data-explanations {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.data-item {
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(0, 212, 255, 0.05));
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    border-radius: 15px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.data-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 30px rgba(0, 212, 255, 0.2);
+}
+
+.data-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.data-item h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #ffffff;
+}
+
+.data-item p {
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #e0e0e0;
+    margin-bottom: 0.75rem;
+}
+
+.data-item p strong {
+    color: #00d4ff;
+    font-weight: 600;
+}
+
+.data-example {
+    padding: 0.75rem 1rem;
+    background: rgba(0, 212, 255, 0.2);
+    border-radius: 10px;
+    border-left: 4px solid #00d4ff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #00d4ff;
+    text-align: center;
+    margin-top: 1rem;
+}
+
+.guide-tips {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05));
+    border: 1px solid #22c55e;
+    border-radius: 20px;
+    padding: 2rem;
+    margin-top: 3rem;
+}
+
+.guide-tips h3 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin-bottom: 2rem;
+    color: #22c55e;
+    text-align: center;
+}
+
+.tips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.tip-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background: rgba(34, 197, 94, 0.2);
+    border-radius: 15px;
+    border: 1px solid #22c55e;
+    transition: all 0.3s ease;
+}
+
+.tip-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(34, 197, 94, 0.2);
+}
+
+.tip-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.tip-text {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #22c55e;
+}
+
+/* Responsividade para Data Guide */
+@media (max-width: 768px) {
+    .guide-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+    
+    .tips-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .tip-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
     }
 }
