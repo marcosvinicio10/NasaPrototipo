@@ -384,7 +384,7 @@ function createDataPoints() {
     createAtmosphereAura();
     
     // Criar estrelas no céu
-    createStars();
+    createStarField();
     
     // Integrar dados reais (em background)
     setTimeout(() => {
@@ -1100,7 +1100,7 @@ function updateClimateDisplay(climateData) {
     const pressureElement = document.getElementById('global-pressure');
     if (pressureElement && climateData.pressure.values.length > 0) {
         const avgPressure = calculateAverage(climateData.pressure.values);
-        pressureElement.textContent = `${Math.round(avgPressure)} hPa`;
+        pressureElement.textContent = `${avgPressure.toFixed(2)} hPa`;
     }
     
     // Velocidade do vento
@@ -1458,7 +1458,7 @@ function generateMonitoringData(point, baseData, timeStamp) {
     const pressure = Math.floor(Math.random() * 50 + baseData.pressureBase);
     const airQuality = getAirQualityIndex(co2);
     
-    return `CO₂: ${co2} ppm | Temp: ${temp}°C | Umidade: ${humidity}% | Pressão: ${pressure} hPa | AQI: ${airQuality} | ${timeStamp}`;
+    return `CO₂: ${co2} ppm | Temp: ${temp}°C | Umidade: ${humidity}% | Pressão: ${pressure.toFixed(2)} hPa | AQI: ${airQuality} | ${timeStamp}`;
 }
 
 // Gerar dados para observatórios
@@ -1829,45 +1829,77 @@ function createAtmosphereAura() {
 }
 
 // Criar estrelas no céu
-function createStars() {
-    const starGeometry = new THREE.BufferGeometry();
-    const starCount = 2000;
-    const positions = new Float32Array(starCount * 3);
-    const colors = new Float32Array(starCount * 3);
-    
-    for (let i = 0; i < starCount; i++) {
-        // Posições aleatórias em uma esfera grande
-        const radius = 50 + Math.random() * 100;
-        const theta = Math.random() * Math.PI * 2;
-        const phi = Math.acos(2 * Math.random() - 1);
-        
-        positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-        positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-        positions[i * 3 + 2] = radius * Math.cos(phi);
-        
-        // Cores aleatórias das estrelas
-        const color = new THREE.Color();
-        color.setHSL(0.1 + Math.random() * 0.1, 0.5 + Math.random() * 0.5, 0.5 + Math.random() * 0.5);
-        colors[i * 3] = color.r;
-        colors[i * 3 + 1] = color.g;
-        colors[i * 3 + 2] = color.b;
+// Criar estrelas de fundo
+function createStarField() {
+    // Verificar se já existe
+    const existingField = scene.getObjectByName('starField');
+    if (existingField) {
+        console.log('⭐ Campo estelar já existe');
+        return;
     }
     
-    starGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    starGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    // Criar geometria de esfera para o fundo estelar
+    const starFieldGeometry = new THREE.SphereGeometry(100, 32, 32);
     
-    const starMaterial = new THREE.PointsMaterial({
-        size: 0.5,
-        vertexColors: true,
+    // Criar textura procedural para as estrelas
+    const canvas = document.createElement('canvas');
+    canvas.width = 2048;
+    canvas.height = 1024;
+    const ctx = canvas.getContext('2d');
+    
+    // Fundo azul escuro
+    ctx.fillStyle = '#000011';
+    ctx.fillRect(0, 0, 2048, 1024);
+    
+    // Adicionar estrelas
+    for (let i = 0; i < 2000; i++) {
+        const x = Math.random() * 2048;
+        const y = Math.random() * 1024;
+        const size = Math.random() * 1.5 + 0.3; // Estrelas menores
+        const brightness = Math.random() * 0.9 + 0.1;
+        
+        // Cores variadas das estrelas
+        const colors = [
+            'rgba(255, 255, 255, ' + brightness + ')', // Branco
+            'rgba(255, 255, 200, ' + brightness + ')', // Amarelo claro
+            'rgba(200, 200, 255, ' + brightness + ')', // Azul claro
+            'rgba(255, 200, 200, ' + brightness + ')'  // Rosa claro
+        ];
+        
+        ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
+        ctx.beginPath();
+        ctx.arc(x, y, size, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Adicionar brilho para estrelas maiores
+        if (size > 1.2) {
+            ctx.fillStyle = `rgba(255, 255, 255, ${brightness * 0.2})`;
+            ctx.beginPath();
+            ctx.arc(x, y, size * 1.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    // Criar textura
+    const starTexture = new THREE.CanvasTexture(canvas);
+    starTexture.wrapS = THREE.RepeatWrapping;
+    starTexture.wrapT = THREE.ClampToEdgeWrapping;
+    
+    // Criar material
+    const starFieldMaterial = new THREE.MeshBasicMaterial({
+        map: starTexture,
         transparent: true,
-        opacity: 0.8
+        opacity: 0.9,
+        side: THREE.BackSide
     });
     
-    const stars = new THREE.Points(starGeometry, starMaterial);
-    stars.name = 'stars';
-    scene.add(stars);
+    // Criar mesh
+    const starField = new THREE.Mesh(starFieldGeometry, starFieldMaterial);
+    starField.name = 'starField';
+    starField.position.set(0, 0, 0);
+    scene.add(starField);
     
-    console.log('✅ Estrelas criadas com sucesso');
+    console.log('✅ Campo estelar criado com sucesso');
 }
 
 // Obter valor específico para exibição
@@ -1897,7 +1929,7 @@ function getDisplayValue(point, dataType) {
             return `${humidity}%`;
         case 'pressure':
             const pressure = Math.floor(Math.random() * 50 + baseData.pressureBase);
-            return `${pressure} hPa`;
+            return `${pressure.toFixed(2)} hPa`;
         default:
             return 'N/A';
     }
@@ -1932,7 +1964,7 @@ function getRealDisplayValue(point, dataType, realData) {
             
         case 'pressure':
             if (realData.weather && realData.weather.pressure !== null) {
-                return `${realData.weather.pressure} hPa`;
+                return `${realData.weather.pressure.toFixed(2)} hPa`;
             }
             return 'Dados não disponíveis';
             
@@ -2395,25 +2427,12 @@ function animateDataPoints() {
         });
     }
     
-    // Animar estrelas (piscar)
-    const stars = scene.getObjectByName('stars');
-    if (stars) {
-        const time = Date.now() * 0.001;
-        stars.rotation.y = time * 0.01;
-        
-        // Fazer algumas estrelas piscarem
-        const positions = stars.geometry.attributes.position.array;
-        const colors = stars.geometry.attributes.color.array;
-        
-        for (let i = 0; i < positions.length; i += 3) {
-            const starIndex = i / 3;
-            const twinkle = Math.sin(time * 2 + starIndex * 0.1) * 0.3 + 0.7;
-            colors[i] *= twinkle;
-            colors[i + 1] *= twinkle;
-            colors[i + 2] *= twinkle;
-        }
-        
-        stars.geometry.attributes.color.needsUpdate = true;
+    // Animar campo estelar
+    const starField = scene.getObjectByName('starField');
+    if (starField) {
+        // Rotação muito lenta para simular movimento das estrelas
+        starField.rotation.y += 0.00005;
+        starField.rotation.x += 0.00002;
     }
     
     // Animar aura atmosférica

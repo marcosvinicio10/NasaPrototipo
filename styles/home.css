@@ -2,8 +2,41 @@
 
 .home-container {
     min-height: 100vh;
-    background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+    background: 
+        linear-gradient(180deg, 
+            rgba(15, 15, 35, 0.95) 0%, 
+            rgba(26, 26, 46, 0.85) 30%, 
+            rgba(22, 33, 62, 0.7) 70%, 
+            rgba(15, 15, 35, 0.6) 100%
+        ),
+        url('../assets/home_background.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
     color: #ffffff;
+    position: relative;
+}
+
+/* Overlay adicional para melhor legibilidade */
+.home-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(180deg, 
+        rgba(0, 0, 0, 0.5) 0%, 
+        rgba(0, 0, 0, 0.3) 50%, 
+        rgba(0, 0, 0, 0.1) 100%
+    );
+    z-index: 1;
+}
+
+/* Garantir que o conteúdo fique acima do overlay */
+.home-container > * {
+    position: relative;
+    z-index: 2;
 }
 
 /* ===== HEADER ===== */
@@ -89,7 +122,14 @@
 }
 
 .cta-btn.secondary {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.1));
+    border-color: #22c55e;
+}
+
+.cta-btn.secondary:hover {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(34, 197, 94, 0.2));
+    border-color: #16a34a;
+    box-shadow: 0 8px 32px rgba(34, 197, 94, 0.3);
 }
 
 .cta-btn .icon {
