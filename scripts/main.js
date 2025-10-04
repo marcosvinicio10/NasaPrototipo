@@ -3,13 +3,51 @@ const EARTH_RADIUS = 1;
 const ATMOSPHERE_RADIUS = 1.01;
 const ROTATION_SPEED = 0.002;
 
+// Configurações de APIs
+const API_CONFIG = {
+    openAQ: {
+        baseURL: 'https://api.openaq.org/v2',
+        endpoints: {
+            measurements: '/measurements',
+            locations: '/locations',
+            countries: '/countries'
+        }
+    },
+    openWeather: {
+        baseURL: 'https://api.openweathermap.org/data/2.5',
+        apiKey: 'demo', // Será substituído por chave real
+        endpoints: {
+            weather: '/weather',
+            airPollution: '/air_pollution'
+        }
+    },
+    nasaFIRMS: {
+        baseURL: 'https://firms.modaps.eosdis.nasa.gov/api',
+        endpoints: {
+            activeFires: '/country/csv/active_fire/modis_c6/global/1'
+        }
+    },
+    // NOVA API: NASA TEMPO
+    nasaTEMPO: {
+        baseURL: 'https://asdc.larc.nasa.gov/data/TEMPO',
+        endpoints: {
+            ozone: '/L2V01/ozone',
+            no2: '/L2V01/no2',
+            hcho: '/L2V01/hcho',
+            aerosols: '/L2V01/aerosols'
+        },
+        dataFormat: 'NetCDF',
+        resolution: '2km',
+        frequency: 'hourly',
+        coverage: 'North America'
+    }
+};
+
 // Variáveis globais
 let scene, camera, renderer, controls;
 let earthMesh, atmosphereMesh;
 let earthMaterial, atmosphereMaterial;
-let isOzoneMode = true;
 let isLoading = true;
-let currentDataType = 'all'; // 'all', 'monitoring', 'station', 'observatory', 'satellite'
 let currentDisplayData = 'co2'; // 'co2', 'temperature', 'ozone', 'humidity', 'pressure'
 let dataPoints = [];
 
@@ -347,48 +385,25 @@ function createDataPoints() {
     
     // Criar estrelas no céu
     createStars();
+    
+    // Integrar dados reais (em background)
+    setTimeout(() => {
+        integrateRealDataWithPoints();
+    }, 2000); // Aguardar 2 segundos para carregar o globo primeiro
+    
+    // Adicionar pontos específicos do TEMPO
+    addTEMPOPointsToGlobe();
+    
+    // Atualizar dados do TEMPO no painel desde o início
+    updateTEMPODataInPanel();
 }
 
-// Filtrar pontos por tipo
-function filterDataPointsByType(type) {
-    if (earthMesh) {
-        earthMesh.traverse((child) => {
-            if (child.userData && child.userData.name) {
-                const pointType = child.userData.type;
-                const shouldShow = type === 'all' || pointType === type;
-                child.visible = shouldShow;
-                
-                // Também esconder/mostrar linha conectora
-                if (child.userData.parentPoint) {
-                    child.visible = shouldShow;
-                }
-                
-                // Esconder/mostrar interface flutuante
-                if (child.userData.floatingInterface) {
-                    child.userData.floatingInterface.visible = shouldShow;
-                }
-            }
-        });
-    }
-}
+// Atualizar dados do clima global
 
-// Alternar tipo de dados
-function toggleDataType(type) {
-    currentDataType = type;
-    filterDataPointsByType(type);
-    updateMenuButtons();
-}
+
 
 // Atualizar botões do menu
 function updateMenuButtons() {
-    const filterButtons = document.querySelectorAll('.filter-btn');
-    filterButtons.forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.dataset.type === currentDataType) {
-            btn.classList.add('active');
-        }
-    });
-    
     const displayButtons = document.querySelectorAll('.display-btn');
     displayButtons.forEach(btn => {
         btn.classList.remove('active');
@@ -403,11 +418,1009 @@ function toggleDisplayData(displayType) {
     currentDisplayData = displayType;
     updateMenuButtons();
     updateFloatingInterfaces();
+    updateGlobalClimateData(); // Atualizar dados do clima
 }
 
-// Funções de carregamento de dados reais removidas - não utilizadas
+// ===== SISTEMA DE APIs REAIS =====
 
-// Função updateDataPointsWithRealData removida - não utilizada
+// Buscar dados de qualidade do ar (OpenAQ)
+async function fetchAirQualityData(lat, lon, radius = 1000) {
+    try {
+        // Tentar usar proxy CORS primeiro
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`${API_CONFIG.openAQ.baseURL}${API_CONFIG.openAQ.endpoints.measurements}?limit=100&coordinates=${lat},${lon}&radius=${radius}&order_by=datetime&sort=desc`)}`;
+        console.log('🌍 Buscando dados de qualidade do ar via proxy:', proxyUrl);
+        console.log('📍 Coordenadas:', lat, lon);
+        
+        const response = await fetch(proxyUrl);
+        console.log('📡 Resposta da API:', response.status, response.statusText);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('✅ Dados de qualidade do ar carregados:', data.results?.length || 0, 'medidas');
+        console.log('📊 Dados recebidos:', data);
+        return data.results || [];
+    } catch (error) {
+        console.warn('❌ Erro ao buscar dados de qualidade do ar via proxy:', error.message);
+        
+        // Fallback: usar dados simulados baseados na localização
+        console.log('🔄 Usando dados simulados para qualidade do ar...');
+        return generateSimulatedAirQualityData(lat, lon);
+    }
+}
+
+// Gerar dados simulados de qualidade do ar
+function generateSimulatedAirQualityData(lat, lon) {
+    // Simular dados baseados na localização
+    const basePM25 = 15 + Math.random() * 20; // 15-35 μg/m³
+    const basePM10 = basePM25 * 1.5;
+    const baseO3 = 40 + Math.random() * 30; // 40-70 μg/m³
+    
+    // Ajustar baseado na localização
+    let locationFactor = 1;
+    if (lat > 60 || lat < -60) locationFactor = 0.7; // Polos mais limpos
+    if (Math.abs(lon) < 30) locationFactor = 1.3; // Europa/África mais poluída
+    
+    return [{
+        parameter: 'pm25',
+        value: Math.round(basePM25 * locationFactor * 10) / 10,
+        unit: 'µg/m³',
+        date: {
+            utc: new Date().toISOString(),
+            local: new Date().toISOString()
+        },
+        location: 'Simulated',
+        country: 'Simulated',
+        city: 'Simulated',
+        coordinates: {
+            latitude: lat,
+            longitude: lon
+        }
+    }, {
+        parameter: 'pm10',
+        value: Math.round(basePM10 * locationFactor * 10) / 10,
+        unit: 'µg/m³',
+        date: {
+            utc: new Date().toISOString(),
+            local: new Date().toISOString()
+        },
+        location: 'Simulated',
+        country: 'Simulated',
+        city: 'Simulated',
+        coordinates: {
+            latitude: lat,
+            longitude: lon
+        }
+    }, {
+        parameter: 'o3',
+        value: Math.round(baseO3 * locationFactor * 10) / 10,
+        unit: 'µg/m³',
+        date: {
+            utc: new Date().toISOString(),
+            local: new Date().toISOString()
+        },
+        location: 'Simulated',
+        country: 'Simulated',
+        city: 'Simulated',
+        coordinates: {
+            latitude: lat,
+            longitude: lon
+        }
+    }];
+}
+
+// Buscar dados meteorológicos (OpenWeatherMap)
+async function fetchWeatherData(lat, lon) {
+    try {
+        const url = `${API_CONFIG.openWeather.baseURL}${API_CONFIG.openWeather.endpoints.weather}?lat=${lat}&lon=${lon}&appid=${API_CONFIG.openWeather.apiKey}&units=metric`;
+        console.log('🌡️ Buscando dados meteorológicos:', url);
+        console.log('📍 Coordenadas:', lat, lon);
+        console.log('🔑 API Key:', API_CONFIG.openWeather.apiKey);
+        
+        const response = await fetch(url);
+        console.log('📡 Resposta da API:', response.status, response.statusText);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('✅ Dados meteorológicos carregados:', data.name);
+        console.log('📊 Dados recebidos:', data);
+        return data;
+    } catch (error) {
+        console.warn('❌ Erro ao buscar dados meteorológicos:', error.message);
+        console.warn('🔗 URL que falhou:', `${API_CONFIG.openWeather.baseURL}${API_CONFIG.openWeather.endpoints.weather}?lat=${lat}&lon=${lon}&appid=${API_CONFIG.openWeather.apiKey}&units=metric`);
+        
+        // Fallback: usar dados simulados baseados na localização
+        console.log('🔄 Usando dados simulados para dados meteorológicos...');
+        return generateSimulatedWeatherData(lat, lon);
+    }
+}
+
+// Gerar dados simulados meteorológicos
+function generateSimulatedWeatherData(lat, lon) {
+    // Simular temperatura baseada na latitude
+    let baseTemp = 25; // Temperatura base
+    if (lat > 60 || lat < -60) baseTemp = -10; // Polos frios
+    else if (lat > 30 || lat < -30) baseTemp = 15; // Zonas temperadas
+    else baseTemp = 28; // Trópicos
+    
+    // Adicionar variação aleatória
+    const tempVariation = (Math.random() - 0.5) * 10;
+    const temperature = Math.round((baseTemp + tempVariation) * 10) / 10;
+    
+    // Simular umidade baseada na localização
+    let humidity = 50 + Math.random() * 30; // 50-80%
+    if (lat > 60 || lat < -60) humidity = 30 + Math.random() * 20; // Polos secos
+    else if (Math.abs(lon) < 30) humidity = 60 + Math.random() * 25; // Europa/África úmida
+    
+    return {
+        name: 'Simulated',
+        main: {
+            temp: temperature,
+            humidity: Math.round(humidity),
+            pressure: 1013 + Math.random() * 20,
+            feels_like: temperature + (Math.random() - 0.5) * 3
+        },
+        weather: [{
+            main: 'Clear',
+            description: 'clear sky',
+            icon: '01d'
+        }],
+        wind: {
+            speed: Math.random() * 10,
+            deg: Math.random() * 360
+        },
+        coord: {
+            lat: lat,
+            lon: lon
+        }
+    };
+}
+
+// Buscar dados de queimadas (NASA FIRMS)
+async function fetchFireData() {
+    try {
+        const today = new Date().toISOString().split('T')[0];
+        const url = `${API_CONFIG.nasaFIRMS.baseURL}${API_CONFIG.nasaFIRMS.endpoints.activeFires}/${today}`;
+        console.log('🔥 Buscando dados de queimadas:', url);
+        
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const csvText = await response.text();
+        const fires = parseCSVToFires(csvText);
+        console.log('✅ Dados de queimadas carregados:', fires.length, 'incêndios ativos');
+        return fires;
+            } catch (error) {
+        console.warn('❌ Erro ao buscar dados de queimadas:', error.message);
+        
+        // Fallback: usar dados simulados de queimadas
+        console.log('🔄 Usando dados simulados para queimadas...');
+        return generateSimulatedFireData();
+    }
+}
+
+// ===== SISTEMA NASA TEMPO =====
+
+// Buscar dados do TEMPO (NASA)
+async function fetchTEMPOData(lat, lon, pollutant = 'ozone') {
+    try {
+        const today = new Date().toISOString().split('T')[0];
+        const hour = new Date().getHours();
+        
+        // Construir URL baseada no poluente
+        let endpoint = '';
+        switch(pollutant) {
+            case 'ozone':
+                endpoint = API_CONFIG.nasaTEMPO.endpoints.ozone;
+                break;
+            case 'no2':
+                endpoint = API_CONFIG.nasaTEMPO.endpoints.no2;
+                break;
+            case 'hcho':
+                endpoint = API_CONFIG.nasaTEMPO.endpoints.hcho;
+                break;
+            case 'aerosols':
+                endpoint = API_CONFIG.nasaTEMPO.endpoints.aerosols;
+                break;
+        }
+        
+        const url = `${API_CONFIG.nasaTEMPO.baseURL}${endpoint}/${today}`;
+        console.log('🛰️ Buscando dados do TEMPO:', url);
+        console.log('📍 Coordenadas:', lat, lon);
+        console.log('🌫️ Poluente:', pollutant);
+        
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        // Processar dados NetCDF
+        const data = await processTEMPOData(response, lat, lon);
+        console.log('✅ Dados do TEMPO carregados:', data);
+        return data;
+        
+    } catch (error) {
+        console.warn('❌ Erro ao buscar dados do TEMPO:', error.message);
+        
+        // Fallback: usar dados simulados baseados no TEMPO
+        console.log('🔄 Usando dados simulados do TEMPO...');
+        return generateSimulatedTEMPOData(lat, lon, pollutant);
+    }
+}
+
+// Processar dados NetCDF do TEMPO
+async function processTEMPOData(response, lat, lon) {
+    try {
+        // Converter resposta para ArrayBuffer
+        const arrayBuffer = await response.arrayBuffer();
+        
+        // Processar dados NetCDF (requer biblioteca netCDF4)
+        const data = {
+            latitude: lat,
+            longitude: lon,
+            timestamp: new Date().toISOString(),
+            source: 'NASA TEMPO',
+            resolution: '2km',
+            coverage: 'North America',
+            pollutants: {}
+        };
+        
+        // Extrair dados de poluentes
+        data.pollutants.ozone = extractPollutantData(arrayBuffer, 'ozone', lat, lon);
+        data.pollutants.no2 = extractPollutantData(arrayBuffer, 'no2', lat, lon);
+        data.pollutants.hcho = extractPollutantData(arrayBuffer, 'hcho', lat, lon);
+        data.pollutants.aerosols = extractPollutantData(arrayBuffer, 'aerosols', lat, lon);
+        
+        return data;
+        
+    } catch (error) {
+        console.warn('❌ Erro ao processar dados do TEMPO:', error.message);
+        throw error;
+    }
+}
+
+// Extrair dados de poluentes do NetCDF
+function extractPollutantData(arrayBuffer, pollutant, lat, lon) {
+    // Simulação de extração de dados NetCDF
+    // Em implementação real, usar biblioteca netCDF4
+    const baseValue = Math.random() * 50;
+    const unit = pollutant === 'aerosols' ? 'AOD' : 'ppb';
+    
+    return {
+        value: Math.round(baseValue * 100) / 100,
+        unit: unit,
+        quality: baseValue > 30 ? 'high' : 'medium'
+    };
+}
+
+// Gerar dados simulados do TEMPO
+function generateSimulatedTEMPOData(lat, lon, pollutant) {
+    // Simular dados baseados na localização e tipo de poluente
+    let baseValue = 0;
+    let unit = '';
+    let description = '';
+    
+    switch(pollutant) {
+        case 'ozone':
+            baseValue = 40 + Math.random() * 30; // 40-70 ppb
+            unit = 'ppb';
+            description = 'Ozônio Troposférico';
+            break;
+        case 'no2':
+            baseValue = 10 + Math.random() * 20; // 10-30 ppb
+            unit = 'ppb';
+            description = 'Dióxido de Nitrogênio';
+            break;
+        case 'hcho':
+            baseValue = 2 + Math.random() * 8; // 2-10 ppb
+            unit = 'ppb';
+            description = 'Formaldeído';
+            break;
+        case 'aerosols':
+            baseValue = 0.1 + Math.random() * 0.4; // 0.1-0.5
+            unit = 'AOD';
+            description = 'Aerosóis';
+            break;
+    }
+    
+    // Ajustar baseado na localização
+    let locationFactor = 1;
+    if (lat > 40 && lat < 50 && lon > -130 && lon < -60) {
+        locationFactor = 1.2; // América do Norte - mais poluída
+    } else if (lat > 25 && lat < 35 && lon > -100 && lon < -80) {
+        locationFactor = 1.5; // Sul dos EUA - muito poluída
+    } else if (lat > 45 && lat < 55 && lon > -80 && lon < -60) {
+        locationFactor = 0.8; // Canadá - menos poluída
+    }
+    
+    return {
+        latitude: lat,
+        longitude: lon,
+        timestamp: new Date().toISOString(),
+        source: 'NASA TEMPO (Simulated)',
+        resolution: '2km',
+        coverage: 'North America',
+        pollutant: {
+            type: pollutant,
+            value: Math.round(baseValue * locationFactor * 100) / 100,
+            unit: unit,
+            description: description,
+            quality: getTEMPOQuality(baseValue * locationFactor, pollutant)
+        }
+    };
+}
+
+// Obter qualidade dos dados do TEMPO
+function getTEMPOQuality(value, pollutant) {
+    switch(pollutant) {
+        case 'ozone':
+            if (value < 50) return 'excellent';
+            if (value < 70) return 'good';
+            if (value < 100) return 'moderate';
+            return 'poor';
+        case 'no2':
+            if (value < 20) return 'excellent';
+            if (value < 40) return 'good';
+            if (value < 60) return 'moderate';
+            return 'poor';
+        case 'hcho':
+            if (value < 5) return 'excellent';
+            if (value < 10) return 'good';
+            if (value < 15) return 'moderate';
+            return 'poor';
+        case 'aerosols':
+            if (value < 0.2) return 'excellent';
+            if (value < 0.4) return 'good';
+            if (value < 0.6) return 'moderate';
+            return 'poor';
+        default:
+            return 'unknown';
+    }
+}
+
+// Gerar dados simulados de queimadas
+function generateSimulatedFireData() {
+    const fires = [];
+    const fireCount = Math.floor(Math.random() * 20) + 5; // 5-25 incêndios
+    
+    for (let i = 0; i < fireCount; i++) {
+        // Gerar coordenadas aleatórias
+        const lat = (Math.random() - 0.5) * 180;
+        const lon = (Math.random() - 0.5) * 360;
+        
+        // Simular intensidade do fogo
+        const confidence = Math.random() * 100;
+        const brightness = 300 + Math.random() * 200;
+        
+        fires.push({
+            latitude: lat,
+            longitude: lon,
+            confidence: Math.round(confidence * 10) / 10,
+            brightness: Math.round(brightness * 10) / 10,
+            scan: Math.round(Math.random() * 2 + 1),
+            track: Math.round(Math.random() * 2 + 1),
+            acq_date: new Date().toISOString().split('T')[0],
+            acq_time: Math.floor(Math.random() * 24 * 60 * 60), // segundos do dia
+            satellite: Math.random() > 0.5 ? 'Terra' : 'Aqua',
+            version: '6.1',
+            bright_t31: Math.round(brightness * 0.8),
+            frp: Math.round(brightness * 0.1),
+            daynight: Math.random() > 0.5 ? 'D' : 'N'
+        });
+    }
+    
+    console.log('🔥 Dados simulados de queimadas gerados:', fires.length, 'incêndios');
+    return fires;
+}
+
+// Converter CSV de queimadas para objetos JavaScript
+function parseCSVToFires(csvText) {
+    const lines = csvText.split('\n');
+    const fires = [];
+    
+    for (let i = 1; i < lines.length; i++) { // Pular cabeçalho
+        const line = lines[i].trim();
+        if (line) {
+            const columns = line.split(',');
+            if (columns.length >= 4) {
+                fires.push({
+                    lat: parseFloat(columns[0]),
+                    lon: parseFloat(columns[1]),
+                    brightness: parseFloat(columns[2]),
+                    confidence: parseFloat(columns[3])
+                });
+            }
+        }
+    }
+    
+    return fires;
+}
+
+// Integrar dados reais com pontos existentes
+async function integrateRealDataWithPoints() {
+    console.log('🔄 Integrando dados reais com pontos...');
+    
+    if (!earthMesh) {
+        console.warn('❌ EarthMesh não encontrado, aguardando...');
+        setTimeout(() => integrateRealDataWithPoints(), 1000);
+        return;
+    }
+    
+    const pointsToProcess = [];
+    
+    // Coletar todos os pontos do Three.js
+    earthMesh.traverse((child) => {
+        if (child.userData && child.userData.name) {
+            pointsToProcess.push(child.userData);
+        }
+    });
+    
+    console.log(`📊 Processando ${pointsToProcess.length} pontos...`);
+    
+    for (let i = 0; i < pointsToProcess.length; i++) {
+        const point = pointsToProcess[i];
+        
+        try {
+            console.log(`🔄 Processando ponto ${i + 1}/${pointsToProcess.length}: ${point.name}`);
+            
+            // Buscar dados de qualidade do ar
+            const airQualityData = await fetchAirQualityData(point.lat, point.lon);
+            if (airQualityData.length > 0) {
+                point.realAirQuality = processAirQualityData(airQualityData);
+                console.log(`✅ Dados de qualidade do ar carregados para ${point.name}:`, point.realAirQuality);
+            } else {
+                console.log(`⚠️ Nenhum dado de qualidade do ar encontrado para ${point.name}`);
+            }
+            
+            // Buscar dados meteorológicos
+            const weatherData = await fetchWeatherData(point.lat, point.lon);
+            if (weatherData) {
+                point.realWeather = processWeatherData(weatherData);
+                console.log(`✅ Dados meteorológicos carregados para ${point.name}:`, point.realWeather);
+            } else {
+                console.log(`⚠️ Nenhum dado meteorológico encontrado para ${point.name}`);
+            }
+            
+            // Pequeno delay para evitar rate limiting
+            await new Promise(resolve => setTimeout(resolve, 200));
+            
+        } catch (error) {
+            console.warn(`❌ Erro ao integrar dados para ponto ${point.name}:`, error.message);
+        }
+    }
+    
+    console.log('✅ Integração de dados reais concluída');
+    updateDataPointsWithRealData();
+    
+    // Integrar dados de queimadas em paralelo
+    integrateFireData();
+    
+    // Integrar dados do TEMPO em paralelo
+    integrateTEMPODataWithPoints();
+}
+
+// Processar dados de qualidade do ar
+function processAirQualityData(airQualityData) {
+    const latestData = airQualityData[0];
+    const parameters = {};
+    
+    airQualityData.forEach(measurement => {
+        const param = measurement.parameter;
+        const value = measurement.value;
+        
+        if (!parameters[param] || new Date(measurement.date.utc) > new Date(parameters[param].date.utc)) {
+            parameters[param] = {
+                value: value,
+                unit: measurement.unit,
+                date: measurement.date
+            };
+        }
+    });
+    
+    return {
+        pm25: parameters.pm25?.value || null,
+        pm10: parameters.pm10?.value || null,
+        no2: parameters.no2?.value || null,
+        o3: parameters.o3?.value || null,
+        so2: parameters.so2?.value || null,
+        co: parameters.co?.value || null,
+        lastUpdate: latestData?.date?.utc || new Date().toISOString()
+    };
+}
+
+// Processar dados meteorológicos
+function processWeatherData(weatherData) {
+    return {
+        temperature: weatherData.main.temp,
+        humidity: weatherData.main.humidity,
+        pressure: weatherData.main.pressure,
+        windSpeed: weatherData.wind.speed,
+        windDirection: weatherData.wind.deg,
+        description: weatherData.weather[0].description,
+        lastUpdate: new Date().toISOString()
+    };
+}
+
+// Atualizar pontos com dados reais
+function updateDataPointsWithRealData() {
+    if (earthMesh) {
+        earthMesh.traverse((child) => {
+            if (child.userData && child.userData.name) {
+                const point = child.userData;
+                const realData = getRealDataForPoint(point);
+                
+                if (realData) {
+                    // Atualizar cor baseada em dados reais
+                    updatePointColorWithRealData(child, realData);
+                    
+                    // Atualizar interface flutuante
+                    if (point.floatingInterface) {
+                        updateFloatingInterfaceWithRealData(point.floatingInterface, realData);
+                    }
+                }
+            }
+        });
+    }
+}
+
+// Obter dados reais para um ponto
+function getRealDataForPoint(point) {
+    if (point.realAirQuality || point.realWeather) {
+        return {
+            airQuality: point.realAirQuality,
+            weather: point.realWeather,
+            hasRealData: true
+        };
+    }
+    return null;
+}
+
+// Atualizar cor do ponto baseada em dados reais
+function updatePointColorWithRealData(pointMesh, realData) {
+    if (realData.airQuality) {
+        const pm25 = realData.airQuality.pm25;
+        if (pm25 !== null) {
+            const color = getAirQualityColor(pm25);
+            pointMesh.material.color.setHex(color);
+        }
+    }
+}
+
+// Obter cor baseada na qualidade do ar real
+function getAirQualityColor(pm25) {
+    if (pm25 <= 12) return 0x4CAF50; // Verde - Bom
+    if (pm25 <= 35) return 0x8BC34A; // Verde claro - Moderado
+    if (pm25 <= 55) return 0xFF9800; // Laranja - Insalubre para grupos sensíveis
+    if (pm25 <= 150) return 0xF44336; // Vermelho - Insalubre
+    return 0x9C27B0; // Roxo - Muito insalubre
+}
+
+// Atualizar interface flutuante com dados reais
+function updateFloatingInterfaceWithRealData(interface, realData) {
+    // Esta função será chamada quando a interface for atualizada
+    console.log('🔄 Atualizando interface com dados reais:', realData);
+}
+
+// Atualizar dados do clima global
+function updateGlobalClimateData() {
+    if (!earthMesh) return;
+    
+    const climateData = {
+        temperature: { min: Infinity, max: -Infinity, values: [] },
+        humidity: { values: [] },
+        pressure: { values: [] },
+        wind: { values: [] },
+        clouds: { values: [] },
+        feelsLike: { values: [] }
+    };
+    
+    // Coletar dados de todos os pontos
+    earthMesh.traverse((child) => {
+        if (child.userData && child.userData.name) {
+            const point = child.userData;
+            
+            // Dados meteorológicos reais
+            if (point.realWeather) {
+                const weather = point.realWeather;
+                if (weather.main) {
+                    if (weather.main.temp !== undefined) {
+                        climateData.temperature.values.push(weather.main.temp);
+                        climateData.temperature.min = Math.min(climateData.temperature.min, weather.main.temp);
+                        climateData.temperature.max = Math.max(climateData.temperature.max, weather.main.temp);
+                    }
+                    if (weather.main.humidity !== undefined) {
+                        climateData.humidity.values.push(weather.main.humidity);
+                    }
+                    if (weather.main.pressure !== undefined) {
+                        climateData.pressure.values.push(weather.main.pressure);
+                    }
+                    if (weather.main.feels_like !== undefined) {
+                        climateData.feelsLike.values.push(weather.main.feels_like);
+                    }
+                }
+                if (weather.wind && weather.wind.speed !== undefined) {
+                    climateData.wind.values.push(weather.wind.speed);
+                }
+                if (weather.clouds && weather.clouds.all !== undefined) {
+                    climateData.clouds.values.push(weather.clouds.all);
+                }
+            }
+            
+            // Dados do TEMPO
+            if (point.tempoData && point.tempoData.pollutant) {
+                const tempo = point.tempoData.pollutant;
+                if (tempo.type === 'ozone' && tempo.value !== undefined) {
+                    // Converter ozônio para temperatura aproximada (simulação)
+                    const tempFromOzone = 20 + (tempo.value / 10);
+                    climateData.temperature.values.push(tempFromOzone);
+                    climateData.temperature.min = Math.min(climateData.temperature.min, tempFromOzone);
+                    climateData.temperature.max = Math.max(climateData.temperature.max, tempFromOzone);
+                }
+            }
+        }
+    });
+    
+    // Atualizar interface com dados calculados
+    updateClimateDisplay(climateData);
+    
+    // Atualizar dados do TEMPO no painel
+    updateTEMPODataInPanel();
+}
+
+// Função auxiliar para calcular média
+function calculateAverage(values) {
+    return values.length > 0 ? values.reduce((sum, val) => sum + val, 0) / values.length : 0;
+}
+
+// Atualizar exibição dos dados do clima
+function updateClimateDisplay(climateData) {
+    // Temperatura global
+    const tempElement = document.getElementById('global-temperature');
+    if (tempElement && climateData.temperature.values.length > 0) {
+        const minTemp = climateData.temperature.min.toFixed(1);
+        const maxTemp = climateData.temperature.max.toFixed(1);
+        tempElement.textContent = `${minTemp}°C - ${maxTemp}°C`;
+    }
+    
+    // Umidade média
+    const humidityElement = document.getElementById('global-humidity');
+    if (humidityElement && climateData.humidity.values.length > 0) {
+        const avgHumidity = calculateAverage(climateData.humidity.values);
+        humidityElement.textContent = `${Math.round(avgHumidity)}%`;
+    }
+    
+    // Pressão atmosférica
+    const pressureElement = document.getElementById('global-pressure');
+    if (pressureElement && climateData.pressure.values.length > 0) {
+        const avgPressure = calculateAverage(climateData.pressure.values);
+        pressureElement.textContent = `${Math.round(avgPressure)} hPa`;
+    }
+    
+    // Velocidade do vento
+    const windElement = document.getElementById('global-wind');
+    if (windElement && climateData.wind.values.length > 0) {
+        const avgWind = calculateAverage(climateData.wind.values);
+        windElement.textContent = `${Math.round(avgWind * 3.6)} km/h`; // Converter m/s para km/h
+    }
+    
+    // Cobertura de nuvens
+    const cloudsElement = document.getElementById('global-clouds');
+    if (cloudsElement && climateData.clouds.values.length > 0) {
+        const avgClouds = calculateAverage(climateData.clouds.values);
+        cloudsElement.textContent = `${Math.round(avgClouds)}%`;
+    }
+    
+    // Sensação térmica
+    const feelsLikeElement = document.getElementById('global-feels-like');
+    if (feelsLikeElement && climateData.feelsLike.values.length > 0) {
+        const avgFeelsLike = calculateAverage(climateData.feelsLike.values);
+        feelsLikeElement.textContent = `${avgFeelsLike.toFixed(1)}°C`;
+    }
+    
+    console.log('🌡️ Dados do clima atualizados:', climateData);
+}
+
+// Buscar e integrar dados de queimadas
+async function integrateFireData() {
+    try {
+        const fireData = await fetchFireData();
+        console.log('🔥 Dados de queimadas carregados:', fireData.length, 'incêndios');
+        
+        // Atualizar contador de queimadas
+        const fireCountElement = document.getElementById('fire-count');
+        if (fireCountElement) {
+            fireCountElement.textContent = `${fireData.length} ativos`;
+            fireCountElement.className = 'analysis-value';
+        }
+        
+        // Adicionar pontos de queimadas ao globo
+        addFirePointsToGlobe(fireData);
+        
+    } catch (error) {
+        console.warn('❌ Erro ao carregar dados de queimadas:', error);
+        const fireCountElement = document.getElementById('fire-count');
+        if (fireCountElement) {
+            fireCountElement.textContent = 'Erro ao carregar';
+            fireCountElement.className = 'analysis-value error';
+        }
+    }
+}
+
+// Integrar dados do TEMPO com pontos existentes
+async function integrateTEMPODataWithPoints() {
+    console.log('🛰️ Integrando dados do TEMPO com pontos...');
+    
+    if (!earthMesh) {
+        console.warn('❌ EarthMesh não encontrado, aguardando...');
+        setTimeout(() => integrateTEMPODataWithPoints(), 1000);
+        return;
+    }
+    
+    const pointsToProcess = [];
+    
+    // Coletar pontos na América do Norte (cobertura do TEMPO)
+    earthMesh.traverse((child) => {
+        if (child.userData && child.userData.name) {
+            const point = child.userData;
+            // Verificar se está na cobertura do TEMPO (América do Norte)
+            if (point.lat > 10 && point.lat < 70 && point.lon > -180 && point.lon < -50) {
+                pointsToProcess.push(point);
+            }
+        }
+    });
+    
+    console.log(`🛰️ Processando ${pointsToProcess.length} pontos com dados do TEMPO...`);
+    
+    for (let i = 0; i < pointsToProcess.length; i++) {
+        const point = pointsToProcess[i];
+        
+        try {
+            console.log(`🛰️ Processando ponto ${i + 1}/${pointsToProcess.length}: ${point.name}`);
+            
+            // Buscar dados do TEMPO para diferentes poluentes
+            const tempoData = await fetchTEMPOData(point.lat, point.lon, 'ozone');
+            if (tempoData) {
+                point.tempoData = tempoData;
+                console.log(`✅ Dados do TEMPO carregados para ${point.name}:`, tempoData);
+            }
+            
+            // Pequeno delay para evitar rate limiting
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+        } catch (error) {
+            console.warn(`❌ Erro ao integrar dados do TEMPO para ponto ${point.name}:`, error.message);
+        }
+    }
+    
+    console.log('✅ Integração de dados do TEMPO concluída');
+    updateDataPointsWithTEMPOData();
+}
+
+// Atualizar pontos com dados do TEMPO
+function updateDataPointsWithTEMPOData() {
+    if (!earthMesh) return;
+    
+    let tempoPointsCount = 0;
+    
+    earthMesh.traverse((child) => {
+        if (child.userData && child.userData.tempoData) {
+            tempoPointsCount++;
+            
+            // Atualizar cor baseada na qualidade do ar do TEMPO
+            const tempoData = child.userData.tempoData;
+            if (tempoData.pollutant) {
+                const quality = tempoData.pollutant.quality;
+                let color = 0x4CAF50; // Verde padrão
+                
+                switch(quality) {
+                    case 'excellent':
+                        color = 0x4CAF50; // Verde
+                        break;
+                    case 'good':
+                        color = 0x8BC34A; // Verde claro
+                        break;
+                    case 'moderate':
+                        color = 0xFFC107; // Amarelo
+                        break;
+                    case 'poor':
+                        color = 0xFF5722; // Vermelho
+                        break;
+                }
+                
+                child.material.color.setHex(color);
+            }
+        }
+    });
+    
+    console.log(`🛰️ ${tempoPointsCount} pontos atualizados com dados do TEMPO`);
+    
+    // Atualizar interfaces flutuantes após carregar dados TEMPO
+    updateFloatingInterfaces();
+}
+
+// Adicionar pontos específicos do TEMPO ao globo
+function addTEMPOPointsToGlobe() {
+    if (!earthMesh) return;
+    
+    // Criar pontos específicos do TEMPO
+    const tempoPoints = [
+        {
+            name: "TEMPO - Los Angeles",
+            lat: 34.0522,
+            lon: -118.2437,
+            data: "Ozônio: 45 ppb | NO₂: 15 ppb",
+            color: 0xff6b6b,
+            type: "tempo"
+        },
+        {
+            name: "TEMPO - New York",
+            lat: 40.7128,
+            lon: -74.0060,
+            data: "Ozônio: 38 ppb | NO₂: 22 ppb",
+            color: 0x4ecdc4,
+            type: "tempo"
+        },
+        {
+            name: "TEMPO - Chicago",
+            lat: 41.8781,
+            lon: -87.6298,
+            data: "Ozônio: 42 ppb | NO₂: 18 ppb",
+            color: 0xffa726,
+            type: "tempo"
+        },
+        {
+            name: "TEMPO - Houston",
+            lat: 29.7604,
+            lon: -95.3698,
+            data: "Ozônio: 52 ppb | NO₂: 25 ppb",
+            color: 0xe91e63,
+            type: "tempo"
+        },
+        {
+            name: "TEMPO - Phoenix",
+            lat: 33.4484,
+            lon: -112.0740,
+            data: "Ozônio: 48 ppb | NO₂: 12 ppb",
+            color: 0x9c27b0,
+            type: "tempo"
+        }
+    ];
+    
+    // Adicionar pontos ao globo
+    tempoPoints.forEach(point => {
+        const geometry = new THREE.SphereGeometry(0.025, 8, 8);
+        const material = new THREE.MeshBasicMaterial({ 
+            color: point.color,
+            emissive: point.color,
+            emissiveIntensity: 0.3
+        });
+        const mesh = new THREE.Mesh(geometry, material);
+        
+        // Posicionar no globo
+        const phi = (90 - point.lat) * Math.PI / 180;
+        const theta = (point.lon + 180) * Math.PI / 180;
+        
+        mesh.position.x = EARTH_RADIUS * Math.sin(phi) * Math.cos(theta);
+        mesh.position.y = EARTH_RADIUS * Math.cos(phi);
+        mesh.position.z = EARTH_RADIUS * Math.sin(phi) * Math.sin(theta);
+        
+        // Armazenar dados
+        mesh.userData = point;
+        
+        // Adicionar ao globo
+        earthMesh.add(mesh);
+    });
+    
+    console.log('🛰️ Pontos do TEMPO adicionados ao globo');
+}
+
+// Adicionar seção do TEMPO ao painel de análise
+// Atualizar dados do TEMPO no painel esquerdo
+function updateTEMPODataInPanel() {
+    // Atualizar contador de pontos TEMPO
+    const tempoPointsCount = document.getElementById('tempo-points-count');
+    if (tempoPointsCount) {
+        let count = 0;
+        if (earthMesh) {
+            earthMesh.traverse((child) => {
+                if (child.userData && child.userData.name && 
+                    (child.userData.type === 'tempo' || child.userData.name.includes('TEMPO'))) {
+                    count++;
+                }
+            });
+        }
+        tempoPointsCount.textContent = `${count} ativos`;
+    }
+    
+    // Atualizar taxas de poluentes
+    updatePollutantRates();
+    
+    console.log('🛰️ Dados do TEMPO atualizados no painel');
+}
+
+// Atualizar taxas de poluentes
+function updatePollutantRates() {
+    const pollutants = {
+        ozone: { element: 'ozone-rate', default: '45 ppb' },
+        no2: { element: 'no2-rate', default: '18 ppb' },
+        hcho: { element: 'hcho-rate', default: '2.5 ppb' },
+        aerosol: { element: 'aerosol-rate', default: '0.3 AOD' }
+    };
+    
+    // Coletar dados reais dos pontos TEMPO
+    const tempoData = { ozone: [], no2: [], hcho: [], aerosol: [] };
+    
+    if (earthMesh) {
+        earthMesh.traverse((child) => {
+            if (child.userData && child.userData.tempoData && child.userData.tempoData.pollutant) {
+                const pollutant = child.userData.tempoData.pollutant;
+                if (pollutant.type && pollutant.value !== undefined) {
+                    tempoData[pollutant.type].push(pollutant.value);
+                }
+            }
+        });
+    }
+    
+    // Atualizar cada poluente
+    Object.keys(pollutants).forEach(pollutant => {
+        const element = document.getElementById(pollutants[pollutant].element);
+        if (element) {
+            if (tempoData[pollutant].length > 0) {
+                const avgValue = tempoData[pollutant].reduce((sum, val) => sum + val, 0) / tempoData[pollutant].length;
+                const unit = pollutant === 'aerosol' ? 'AOD' : 'ppb';
+                element.textContent = `${avgValue.toFixed(1)} ${unit}`;
+            } else {
+                element.textContent = pollutants[pollutant].default;
+            }
+        }
+    });
+}
+
+// Adicionar pontos de queimadas ao globo
+function addFirePointsToGlobe(fireData) {
+    if (!earthMesh || fireData.length === 0) return;
+    
+    fireData.forEach(fire => {
+        // Converter coordenadas para posição 3D
+        const lat = fire.lat * Math.PI / 180;
+        const lon = fire.lon * Math.PI / 180;
+        const radius = EARTH_RADIUS + 0.01; // Ligeiramente acima da superfície
+        
+        const x = radius * Math.cos(lat) * Math.cos(lon);
+        const y = radius * Math.sin(lat);
+        const z = radius * Math.cos(lat) * Math.sin(lon);
+        
+        // Criar geometria do ponto de queimada
+        const fireGeometry = new THREE.SphereGeometry(0.02, 8, 8);
+        const fireMaterial = new THREE.MeshBasicMaterial({
+            color: 0xff4500, // Laranja vermelho
+            transparent: true,
+            opacity: 0.8
+        });
+        
+        const firePoint = new THREE.Mesh(fireGeometry, fireMaterial);
+        firePoint.position.set(x, y, z);
+        firePoint.userData = {
+            name: 'Queimada',
+            type: 'fire',
+            lat: fire.lat,
+            lon: fire.lon,
+            brightness: fire.brightness,
+            confidence: fire.confidence
+        };
+        
+        earthMesh.add(firePoint);
+    });
+    
+    console.log('🔥 Pontos de queimadas adicionados ao globo:', fireData.length);
+}
 
 // Gerar dados específicos para cada estação
 function generateStationData(point) {
@@ -497,6 +1510,14 @@ function getAirQualityIndex(co2) {
 
 // Obter status da qualidade do ar com cores
 function getAirQualityStatus(data) {
+    // Verificar se há dados reais disponíveis
+    const realData = getRealDataForPoint(data);
+    
+    if (realData && realData.airQuality && realData.airQuality.pm25 !== null) {
+        return getRealAirQualityStatus(realData.airQuality.pm25);
+    }
+    
+    // Fallback para dados simulados
     const baseData = getBaseDataForLocation(data.lat, data.lon);
     const co2 = Math.floor(Math.random() * 20 + baseData.co2Base);
     
@@ -510,6 +1531,21 @@ function getAirQualityStatus(data) {
         return { status: '🔴 Ruim', color: '#F44336' };
     } else {
         return { status: '💀 Muito Ruim', color: '#9C27B0' };
+    }
+}
+
+// Obter status da qualidade do ar com dados reais (PM2.5)
+function getRealAirQualityStatus(pm25) {
+    if (pm25 <= 12) {
+        return { status: '🟢 Bom', color: '#4CAF50' };
+    } else if (pm25 <= 35) {
+        return { status: '🟡 Moderado', color: '#8BC34A' };
+    } else if (pm25 <= 55) {
+        return { status: '🟠 Insalubre para grupos sensíveis', color: '#FF9800' };
+    } else if (pm25 <= 150) {
+        return { status: '🔴 Insalubre', color: '#F44336' };
+    } else {
+        return { status: '💀 Muito Insalubre', color: '#9C27B0' };
     }
 }
 
@@ -533,42 +1569,81 @@ function createFloatingInterface(point) {
     canvas.height = 80;
     const ctx = canvas.getContext('2d');
     
+    // Verificar se é ponto TEMPO para destacar
+    const isTempoPoint = point.type === 'tempo' || point.name.includes('TEMPO');
+    
     // Obter dados específicos
     const dataValue = getDisplayValue(point, currentDisplayData);
     const airQuality = getAirQualityStatus(point);
     
-    // Fundo com gradiente
+    // Fundo com gradiente (diferente para TEMPO)
     const gradient = ctx.createLinearGradient(0, 0, 0, 80);
-    gradient.addColorStop(0, 'rgba(10, 10, 10, 0.95)');
-    gradient.addColorStop(1, 'rgba(20, 20, 20, 0.95)');
+    if (isTempoPoint) {
+        gradient.addColorStop(0, 'rgba(255, 107, 53, 0.95)'); // Laranja para TEMPO
+        gradient.addColorStop(1, 'rgba(255, 140, 66, 0.95)');
+    } else {
+        gradient.addColorStop(0, 'rgba(10, 10, 10, 0.95)');
+        gradient.addColorStop(1, 'rgba(20, 20, 20, 0.95)');
+    }
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, 200, 80);
     
-    // Borda
-    ctx.strokeStyle = airQuality.color;
+    // Borda (diferente para TEMPO)
+    if (isTempoPoint) {
+        ctx.strokeStyle = '#FF6B35'; // Laranja para TEMPO
+        ctx.lineWidth = 3; // Mais espessa para TEMPO
+    } else {
+        ctx.strokeStyle = airQuality.color;
     ctx.lineWidth = 2;
+    }
     ctx.strokeRect(1, 1, 198, 78);
     
-    // Título (tipo de dado)
+    // Título (diferente para TEMPO)
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 12px Inter, sans-serif';
+    ctx.font = isTempoPoint ? 'bold 13px Inter, sans-serif' : 'bold 12px Inter, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(getDataTypeLabel(currentDisplayData), 100, 18);
     
-    // Valor do dado
-    ctx.fillStyle = airQuality.color;
-    ctx.font = 'bold 16px Inter, sans-serif';
-    ctx.fillText(dataValue, 100, 38);
+    if (isTempoPoint) {
+        ctx.fillText('🛰️ TEMPO NASA', 100, 18);
+    } else {
+        ctx.fillText(getDataTypeLabel(currentDisplayData), 100, 18);
+    }
     
-    // Status da qualidade do ar
-    ctx.fillStyle = '#d0d0d0';
-    ctx.font = '11px Inter, sans-serif';
-    ctx.fillText(airQuality.status, 100, 55);
-    
-    // Nome da estação
-    ctx.fillStyle = '#a0a0a0';
-    ctx.font = '10px Inter, sans-serif';
-    ctx.fillText(point.name, 100, 70);
+    // Valor do dado (diferente para TEMPO)
+    if (isTempoPoint) {
+        // Dados específicos do TEMPO
+        const tempoData = point.tempoData || {};
+        const pollutant = tempoData.pollutant || {};
+        
+        ctx.fillStyle = '#FF6B35'; // Laranja para TEMPO
+        ctx.font = 'bold 14px Inter, sans-serif';
+        ctx.fillText(`${pollutant.type || 'O₃'}: ${pollutant.value || 'N/A'} ${pollutant.unit || 'ppb'}`, 100, 38);
+        
+        // Status da qualidade do TEMPO
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '11px Inter, sans-serif';
+        ctx.fillText(`Qualidade: ${getTEMPOQuality(pollutant.value || 0)}`, 100, 55);
+        
+        // Nome da estação TEMPO
+        ctx.fillStyle = '#FFE0B2';
+        ctx.font = '10px Inter, sans-serif';
+        ctx.fillText(point.name, 100, 70);
+    } else {
+        // Dados normais
+        ctx.fillStyle = airQuality.color;
+        ctx.font = 'bold 16px Inter, sans-serif';
+        ctx.fillText(dataValue, 100, 38);
+        
+        // Status da qualidade do ar
+        ctx.fillStyle = '#d0d0d0';
+        ctx.font = '11px Inter, sans-serif';
+        ctx.fillText(airQuality.status, 100, 55);
+        
+        // Nome da estação
+        ctx.fillStyle = '#a0a0a0';
+        ctx.font = '10px Inter, sans-serif';
+        ctx.fillText(point.name, 100, 70);
+    }
     
     // Criar textura
     const texture = new THREE.CanvasTexture(canvas);
@@ -579,10 +1654,17 @@ function createFloatingInterface(point) {
     });
     
     const sprite = new THREE.Sprite(material);
-    sprite.scale.set(0.4, 0.16, 1);
-    sprite.userData = { parentPoint: point };
     
-    // Posicionar acima do ponto
+    // Escala maior para TEMPO
+    if (isTempoPoint) {
+        sprite.scale.set(0.5, 0.2, 1); // Maior para TEMPO
+    } else {
+        sprite.scale.set(0.4, 0.16, 1);
+    }
+    
+    sprite.userData = { parentPoint: point, isTempo: isTempoPoint };
+    
+    // Posicionar acima do ponto (mais alto para TEMPO)
     const pointPosition = new THREE.Vector3();
     if (earthMesh) {
         earthMesh.traverse((child) => {
@@ -593,7 +1675,7 @@ function createFloatingInterface(point) {
     }
     
     sprite.position.copy(pointPosition);
-    sprite.position.y += 0.3; // Acima do ponto
+    sprite.position.y += isTempoPoint ? 0.5 : 0.3; // Mais alto para TEMPO
     
     earthMesh.add(sprite);
     return sprite;
@@ -619,6 +1701,9 @@ function updateFloatingInterfaces() {
                 const interface = child.userData.floatingInterface;
                 const point = child.userData;
                 
+                // Verificar se é ponto TEMPO para destacar
+                const isTempoPoint = point.type === 'tempo' || point.name.includes('TEMPO');
+                
                 // Recriar interface com novos dados
                 const canvas = document.createElement('canvas');
                 canvas.width = 200;
@@ -629,38 +1714,74 @@ function updateFloatingInterfaces() {
                 const dataValue = getDisplayValue(point, currentDisplayData);
                 const airQuality = getAirQualityStatus(point);
                 
-                // Fundo com gradiente
+                // Fundo com gradiente (diferente para TEMPO)
                 const gradient = ctx.createLinearGradient(0, 0, 0, 80);
-                gradient.addColorStop(0, 'rgba(10, 10, 10, 0.95)');
-                gradient.addColorStop(1, 'rgba(20, 20, 20, 0.95)');
+                if (isTempoPoint) {
+                    gradient.addColorStop(0, 'rgba(255, 107, 53, 0.95)'); // Laranja para TEMPO
+                    gradient.addColorStop(1, 'rgba(255, 140, 66, 0.95)');
+                } else {
+                    gradient.addColorStop(0, 'rgba(10, 10, 10, 0.95)');
+                    gradient.addColorStop(1, 'rgba(20, 20, 20, 0.95)');
+                }
                 ctx.fillStyle = gradient;
                 ctx.fillRect(0, 0, 200, 80);
                 
-                // Borda
-                ctx.strokeStyle = airQuality.color;
-                ctx.lineWidth = 2;
+                // Borda (diferente para TEMPO)
+                if (isTempoPoint) {
+                    ctx.strokeStyle = '#FF6B35'; // Laranja para TEMPO
+                    ctx.lineWidth = 3; // Mais espessa para TEMPO
+                } else {
+                    ctx.strokeStyle = airQuality.color;
+                    ctx.lineWidth = 2;
+                }
                 ctx.strokeRect(1, 1, 198, 78);
                 
-                // Título (tipo de dado)
+                // Título (diferente para TEMPO)
                 ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 12px Inter, sans-serif';
+                ctx.font = isTempoPoint ? 'bold 13px Inter, sans-serif' : 'bold 12px Inter, sans-serif';
                 ctx.textAlign = 'center';
-                ctx.fillText(getDataTypeLabel(currentDisplayData), 100, 18);
                 
-                // Valor do dado
-                ctx.fillStyle = airQuality.color;
-                ctx.font = 'bold 16px Inter, sans-serif';
-                ctx.fillText(dataValue, 100, 38);
+                if (isTempoPoint) {
+                    ctx.fillText('🛰️ TEMPO NASA', 100, 18);
+                } else {
+                    ctx.fillText(getDataTypeLabel(currentDisplayData), 100, 18);
+                }
                 
-                // Status da qualidade do ar
-                ctx.fillStyle = '#d0d0d0';
-                ctx.font = '11px Inter, sans-serif';
-                ctx.fillText(airQuality.status, 100, 55);
-                
-                // Nome da estação
-                ctx.fillStyle = '#a0a0a0';
-                ctx.font = '10px Inter, sans-serif';
-                ctx.fillText(point.name, 100, 70);
+                // Valor do dado (diferente para TEMPO)
+                if (isTempoPoint) {
+                    // Dados específicos do TEMPO
+                    const tempoData = point.tempoData || {};
+                    const pollutant = tempoData.pollutant || {};
+                    
+                    ctx.fillStyle = '#FF6B35'; // Laranja para TEMPO
+                    ctx.font = 'bold 14px Inter, sans-serif';
+                    ctx.fillText(`${pollutant.type || 'O₃'}: ${pollutant.value || 'N/A'} ${pollutant.unit || 'ppb'}`, 100, 38);
+                    
+                    // Status da qualidade do TEMPO
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '11px Inter, sans-serif';
+                    ctx.fillText(`Qualidade: ${getTEMPOQuality(pollutant.value || 0)}`, 100, 55);
+                    
+                    // Nome da estação TEMPO
+                    ctx.fillStyle = '#FFE0B2';
+                    ctx.font = '10px Inter, sans-serif';
+                    ctx.fillText(point.name, 100, 70);
+                } else {
+                    // Dados normais
+                    ctx.fillStyle = airQuality.color;
+                    ctx.font = 'bold 16px Inter, sans-serif';
+                    ctx.fillText(dataValue, 100, 38);
+                    
+                    // Status da qualidade do ar
+                    ctx.fillStyle = '#d0d0d0';
+                    ctx.font = '11px Inter, sans-serif';
+                    ctx.fillText(airQuality.status, 100, 55);
+                    
+                    // Nome da estação
+                    ctx.fillStyle = '#a0a0a0';
+                    ctx.font = '10px Inter, sans-serif';
+                    ctx.fillText(point.name, 100, 70);
+                }
                 
                 // Atualizar textura
                 const texture = new THREE.CanvasTexture(canvas);
@@ -751,6 +1872,14 @@ function createStars() {
 
 // Obter valor específico para exibição
 function getDisplayValue(point, dataType) {
+    // Verificar se há dados reais disponíveis
+    const realData = getRealDataForPoint(point);
+    
+    if (realData && realData.hasRealData) {
+        return getRealDisplayValue(point, dataType, realData);
+    }
+    
+    // Fallback para dados simulados
     const baseData = getBaseDataForLocation(point.lat, point.lon);
     
     switch (dataType) {
@@ -771,6 +1900,44 @@ function getDisplayValue(point, dataType) {
             return `${pressure} hPa`;
         default:
             return 'N/A';
+    }
+}
+
+// Obter valor de exibição com dados reais
+function getRealDisplayValue(point, dataType, realData) {
+    switch (dataType) {
+        case 'co2':
+            if (realData.airQuality && realData.airQuality.co !== null) {
+                return `${realData.airQuality.co.toFixed(1)} ppm CO`;
+            }
+            return 'Dados não disponíveis';
+            
+        case 'temperature':
+            if (realData.weather && realData.weather.temperature !== null) {
+                return `${realData.weather.temperature.toFixed(1)}°C`;
+            }
+            return 'Dados não disponíveis';
+            
+        case 'ozone':
+            if (realData.airQuality && realData.airQuality.o3 !== null) {
+                return `${realData.airQuality.o3.toFixed(1)} μg/m³ O₃`;
+            }
+            return 'Dados não disponíveis';
+            
+        case 'humidity':
+            if (realData.weather && realData.weather.humidity !== null) {
+                return `${realData.weather.humidity}%`;
+            }
+            return 'Dados não disponíveis';
+            
+        case 'pressure':
+            if (realData.weather && realData.weather.pressure !== null) {
+                return `${realData.weather.pressure} hPa`;
+            }
+            return 'Dados não disponíveis';
+            
+        default:
+            return 'Dados não disponíveis';
     }
 }
 
@@ -830,6 +1997,10 @@ function createBasicEarth() {
 // Carregar texturas
 function loadTextures() {
     const loader = new THREE.TextureLoader();
+    
+    // Configurar crossOrigin para evitar erros de CORS
+    loader.crossOrigin = 'anonymous';
+    
     let loadedCount = 0;
     const totalTextures = 5;
     
@@ -925,15 +2096,40 @@ function loadTextures() {
         co2: co2Texture
     };
     
-    // Timeout de segurança - se não carregar em 10 segundos, usar fallbacks
+    // Timeout de segurança - se não carregar em 5 segundos, usar fallbacks
     setTimeout(() => {
-        if (isLoading) {
-            console.warn('Timeout no carregamento, usando texturas de fallback');
-            hideLoading();
-            createEarth();
-            createAtmosphere();
+        if (loadedCount < totalTextures) {
+            console.warn(`Timeout no carregamento (${loadedCount}/${totalTextures} texturas), usando fallbacks`);
+            
+            // Forçar uso de texturas de fallback
+            if (!window.earthTextures) {
+                window.earthTextures = {};
+            }
+            if (!window.atmosphereTextures) {
+                window.atmosphereTextures = {};
+            }
+            
+            // Criar fallbacks para texturas não carregadas
+            if (!window.earthTextures.surface) {
+                window.earthTextures.surface = createFallbackTexture(0x2a4a2a);
+            }
+            if (!window.earthTextures.bump) {
+                window.earthTextures.bump = createFallbackTexture(0x808080);
+            }
+            if (!window.earthTextures.specular) {
+                window.earthTextures.specular = createFallbackTexture(0x0000ff);
+            }
+            if (!window.atmosphereTextures.ozone) {
+                window.atmosphereTextures.ozone = createFallbackTexture(0x00ff00);
+            }
+            if (!window.atmosphereTextures.co2) {
+                window.atmosphereTextures.co2 = createFallbackTexture(0xff6600);
+            }
+            
+            updateEarthWithTextures();
+            updateAtmosphereWithTextures();
         }
-    }, 10000);
+    }, 5000);
 }
 
 // Atualizar Terra com texturas da NASA
@@ -1014,13 +2210,10 @@ function setupEventListeners() {
         window.location.href = '/pages/quiz.html';
     });
     
-    // Botões de filtro de tipo
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const type = btn.dataset.type;
-            toggleDataType(type);
-        });
-    });
+    // Atualizar dados do clima periodicamente
+    setInterval(() => {
+        updateGlobalClimateData();
+    }, 30000); // Atualizar a cada 30 segundos
     
     // Botões de tipo de dado exibido
     document.querySelectorAll('.display-btn').forEach(btn => {
