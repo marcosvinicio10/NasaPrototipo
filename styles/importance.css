@@ -69,17 +69,11 @@
 }
 
 .impact-card {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 16px;
     padding: 2rem;
-    transition: all 0.3s ease;
     backdrop-filter: blur(10px);
-}
-
-.impact-card:hover {
-    transform: translateY(-5px);
-    background: rgba(255, 255, 255, 0.08);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
@@ -126,14 +120,9 @@
 .stat {
     text-align: center;
     padding: 1rem;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    transition: all 0.3s ease;
-}
-
-.stat:hover {
     background: rgba(255, 255, 255, 0.1);
-    transform: scale(1.05);
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .stat .number {
@@ -182,17 +171,11 @@
 }
 
 .viz-item {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 12px;
     padding: 2rem;
-    transition: all 0.3s ease;
     backdrop-filter: blur(10px);
-}
-
-.viz-item:hover {
-    transform: translateY(-3px);
-    background: rgba(255, 255, 255, 0.08);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
@@ -242,18 +225,12 @@
 }
 
 .solution-card {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 16px;
     padding: 2rem;
     text-align: center;
-    transition: all 0.3s ease;
     backdrop-filter: blur(10px);
-}
-
-.solution-card:hover {
-    transform: translateY(-5px);
-    background: rgba(255, 255, 255, 0.08);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
@@ -332,9 +309,9 @@
     transition: all 0.3s ease;
 }
 
-.cta-content .cta-btn:hover {
+.cta-content .cta-btn {
     background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .cta-content .cta-btn.primary {
@@ -439,16 +416,11 @@
 }
 
 .story-card {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.08));
+    border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 15px;
     padding: 2rem;
     backdrop-filter: blur(10px);
-    transition: all 0.3s ease;
-}
-
-.story-card:hover {
-    transform: translateY(-5px);
     box-shadow: 0 20px 40px rgba(0, 212, 255, 0.2);
 }
 
@@ -520,16 +492,11 @@
 }
 
 .data-card {
-    background: linear-gradient(135deg, rgba(255, 107, 107, 0.2), rgba(255, 107, 107, 0.1));
+    background: linear-gradient(135deg, rgba(255, 107, 107, 0.3), rgba(255, 107, 107, 0.2));
     border: 2px solid #ff6b6b;
     border-radius: 15px;
     padding: 2rem;
     text-align: center;
-    transition: all 0.3s ease;
-}
-
-.data-card:hover {
-    transform: scale(1.05);
     box-shadow: 0 20px 40px rgba(255, 107, 107, 0.3);
 }
 
@@ -585,16 +552,11 @@
 }
 
 .nasa-card {
-    background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(0, 212, 255, 0.1));
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.3), rgba(0, 212, 255, 0.2));
     border: 1px solid #00d4ff;
     border-radius: 15px;
     padding: 2rem;
     text-align: center;
-    transition: all 0.3s ease;
-}
-
-.nasa-card:hover {
-    transform: translateY(-5px);
     box-shadow: 0 20px 40px rgba(0, 212, 255, 0.2);
 }
 
@@ -652,16 +614,11 @@
 }
 
 .personal-card {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.08));
+    border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 15px;
     padding: 2rem;
     backdrop-filter: blur(10px);
-    transition: all 0.3s ease;
-}
-
-.personal-card:hover {
-    transform: translateY(-5px);
     box-shadow: 0 20px 40px rgba(255, 255, 255, 0.1);
 }
 
@@ -732,16 +689,11 @@
 }
 
 .action-card {
-    background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.1));
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(34, 197, 94, 0.2));
     border: 1px solid #22c55e;
     border-radius: 15px;
     padding: 2rem;
     text-align: center;
-    transition: all 0.3s ease;
-}
-
-.action-card:hover {
-    transform: translateY(-5px);
     box-shadow: 0 20px 40px rgba(34, 197, 94, 0.2);
 }
 
@@ -859,8 +811,7 @@
     border: 2px solid #22c55e;
 }
 
-.cta-btn:hover {
-    transform: translateY(-3px);
+.cta-btn {
     box-shadow: 0 15px 30px rgba(0, 212, 255, 0.3);
 }
 
@@ -977,11 +928,10 @@
     transition: all 0.3s ease;
 }
 
-.group-card:hover,
-.leader-card:hover,
-.emergency-card:hover,
-.professional-card:hover {
-    transform: translateY(-3px);
+.group-card,
+.leader-card,
+.emergency-card,
+.professional-card {
     box-shadow: 0 15px 30px rgba(0, 212, 255, 0.2);
 }
 
@@ -1038,8 +988,7 @@
     transition: all 0.3s ease;
 }
 
-.community-item:hover {
-    transform: translateY(-3px);
+.community-item {
     box-shadow: 0 15px 30px rgba(0, 212, 255, 0.2);
 }
 
@@ -1102,8 +1051,7 @@
     transition: all 0.3s ease;
 }
 
-.action-item:hover {
-    transform: translateY(-2px);
+.action-item {
     box-shadow: 0 10px 20px rgba(34, 197, 94, 0.2);
 }
 
@@ -1203,8 +1151,7 @@
     transition: all 0.3s ease;
 }
 
-.data-item:hover {
-    transform: translateY(-3px);
+.data-item {
     box-shadow: 0 15px 30px rgba(0, 212, 255, 0.2);
 }
 
@@ -1278,8 +1225,7 @@
     transition: all 0.3s ease;
 }
 
-.tip-item:hover {
-    transform: translateY(-2px);
+.tip-item {
     box-shadow: 0 10px 20px rgba(34, 197, 94, 0.2);
 }
 

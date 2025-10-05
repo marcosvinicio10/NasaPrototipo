@@ -23,68 +23,68 @@ class QuizApp {
         this.questions = [
             {
                 id: 1,
-                question: "O que significa AQI?",
-                category: "Conceitos Básicos",
+                question: "Imagine que você está caminhando na rua e sente que o ar está 'pesado' e difícil de respirar. Qual é o poluente invisível que mais provavelmente está causando essa sensação?",
+                category: "🌬️ Experiência Pessoal",
                 options: [
-                    "Air Quality Index",
-                    "Atmospheric Quality Indicator",
-                    "Air Quantity Index",
-                    "Atmospheric Quantity Indicator"
+                    "Dióxido de Carbono (CO₂) - o gás que expiramos",
+                    "Material Particulado (PM2.5) - partículas microscópicas que entram nos pulmões",
+                    "Oxigênio (O₂) - o gás que respiramos",
+                    "Nitrogênio (N₂) - o gás mais abundante no ar"
                 ],
-                correct: 0,
-                explanation: "AQI significa Air Quality Index (Índice de Qualidade do Ar), uma medida padronizada da qualidade do ar."
+                correct: 1,
+                explanation: "O PM2.5 são partículas tão pequenas que penetram profundamente nos pulmões, causando aquela sensação de 'ar pesado' e dificuldade para respirar. É como respirar poeira invisível!"
             },
             {
                 id: 2,
-                question: "Qual é o principal poluente atmosférico responsável por problemas respiratórios?",
-                category: "Poluentes",
+                question: "Você está planejando uma atividade ao ar livre para sua família. Qual valor de qualidade do ar você consideraria seguro para crianças brincarem no parque?",
+                category: "👨‍👩‍👧‍👦 Proteção Familiar",
                 options: [
-                    "Dióxido de Carbono (CO₂)",
-                    "Material Particulado (PM2.5)",
-                    "Oxigênio (O₂)",
-                    "Nitrogênio (N₂)"
+                    "0-50 (Verde) - Ar limpo e seguro para todos",
+                    "51-100 (Amarelo) - Aceitável, mas sensíveis devem ter cuidado",
+                    "101-150 (Laranja) - Insalubre para grupos sensíveis",
+                    "151-200 (Vermelho) - Insalubre para todos"
                 ],
-                correct: 1,
-                explanation: "O Material Particulado (PM2.5) é o principal poluente responsável por problemas respiratórios, pois penetra profundamente nos pulmões."
+                correct: 0,
+                explanation: "Valores 0-50 (Verde) são os únicos considerados seguros para atividades ao ar livre, especialmente para crianças, idosos e pessoas com problemas respiratórios. É quando você pode respirar fundo sem se preocupar!"
             },
             {
                 id: 3,
-                question: "Qual valor de AQI é considerado 'Bom' para a saúde?",
-                category: "Padrões de Qualidade",
+                question: "Sua avó de 75 anos está preocupada com a qualidade do ar em sua cidade. Qual é o impacto mais comum da poluição do ar na saúde de idosos?",
+                category: "👵 Impacto na Terceira Idade",
                 options: [
-                    "0-50",
-                    "51-100",
-                    "101-150",
-                    "151-200"
+                    "Melhora da capacidade pulmonar",
+                    "Aumento do risco de infartos e derrames",
+                    "Fortalecimento do sistema imunológico",
+                    "Redução da pressão arterial"
                 ],
-                correct: 0,
-                explanation: "Valores de AQI entre 0-50 são considerados 'Bom' e representam risco mínimo para a saúde."
+                correct: 1,
+                explanation: "A poluição do ar aumenta significativamente o risco de problemas cardiovasculares em idosos, incluindo infartos e derrames. É por isso que dias de ar poluído são especialmente perigosos para nossos avós."
             },
             {
                 id: 4,
-                question: "Qual é a principal fonte de poluição do ar em áreas urbanas?",
-                category: "Fontes de Poluição",
+                question: "Você está dirigindo para o trabalho todos os dias e se preocupa com sua contribuição para a poluição. Qual ação diária teria o maior impacto positivo na qualidade do ar?",
+                category: "🚗 Ação Pessoal",
                 options: [
-                    "Indústrias",
-                    "Veículos automotores",
-                    "Queimadas",
-                    "Aquecimento residencial"
+                    "Usar o ar-condicionado do carro menos",
+                    "Optar por transporte público ou bicicleta 2-3 vezes por semana",
+                    "Trocar o filtro de ar do carro mensalmente",
+                    "Dirigir mais devagar para economizar combustível"
                 ],
                 correct: 1,
-                explanation: "Em áreas urbanas, os veículos automotores são a principal fonte de poluição do ar, especialmente para NOx e material particulado."
+                explanation: "Reduzir o uso do carro individual é a ação mais impactante. Cada viagem que você faz de ônibus, metrô ou bicicleta significa menos poluentes no ar que todos respiramos!"
             },
             {
                 id: 5,
-                question: "Quantas pessoas morrem anualmente devido à poluição do ar?",
-                category: "Impacto Global",
+                question: "Refletindo sobre o que você aprendeu no AirQuest, quantas pessoas no mundo respiram ar que não atende aos padrões seguros da OMS?",
+                category: "🌍 Consciência Global",
                 options: [
-                    "1 milhão",
-                    "4 milhões",
-                    "7 milhões",
-                    "10 milhões"
+                    "1 em cada 10 pessoas (10%)",
+                    "1 em cada 4 pessoas (25%)",
+                    "9 em cada 10 pessoas (90%)",
+                    "Todas as pessoas (100%)"
                 ],
                 correct: 2,
-                explanation: "Segundo a OMS, aproximadamente 7 milhões de pessoas morrem anualmente devido à poluição do ar, tanto exterior quanto interior."
+                explanation: "Incrivelmente, 9 em cada 10 pessoas no mundo respiram ar que não atende aos padrões seguros da OMS. Isso significa que quase todos nós, incluindo você e sua família, estamos expostos a níveis perigosos de poluição do ar."
             }
         ];
         
@@ -104,11 +104,17 @@ class QuizApp {
         const skipBtn = document.getElementById('skip-btn');
         
         if (nextBtn) {
-            nextBtn.addEventListener('click', () => this.nextQuestion());
+            nextBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.nextQuestion();
+            });
         }
         
         if (skipBtn) {
-            skipBtn.addEventListener('click', () => this.skipQuestion());
+            skipBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.skipQuestion();
+            });
         }
     }
 
@@ -119,6 +125,7 @@ class QuizApp {
         this.correctAnswers = 0;
         this.startTime = Date.now();
         this.quizCompleted = false;
+        this.selectedAnswer = null;
         
         this.showQuestion();
         this.updateProgress();
@@ -152,8 +159,9 @@ class QuizApp {
             answersContainer.appendChild(answerElement);
         });
         
-        // Resetar seleção
+        // Resetar seleção e estado
         this.selectedAnswer = null;
+        this.quizCompleted = false;
         this.updateNextButton();
     }
 
@@ -178,21 +186,28 @@ class QuizApp {
     updateNextButton() {
         const nextBtn = document.getElementById('next-btn');
         if (nextBtn) {
-            nextBtn.disabled = this.selectedAnswer === null;
+            nextBtn.disabled = this.selectedAnswer === null || this.quizCompleted;
         }
     }
 
     nextQuestion() {
-        if (this.selectedAnswer === null) return;
+        if (this.selectedAnswer === null || this.quizCompleted) {
+            console.log('Próxima pergunta bloqueada - sem resposta ou já processada');
+            return;
+        }
+        
+        // Prevenir múltiplas execuções
+        this.quizCompleted = true;
         
         const question = this.questions[this.currentQuestion];
         const isCorrect = this.selectedAnswer === question.correct;
         
-        console.log(`Resposta: ${isCorrect ? 'Correta' : 'Incorreta'}`);
+        console.log(`Pergunta ${this.currentQuestion + 1}: Resposta ${isCorrect ? 'Correta' : 'Incorreta'} (${this.correctAnswers} corretas até agora)`);
         
         if (isCorrect) {
             this.correctAnswers++;
             this.score += 100;
+            console.log(`Acerto! Total: ${this.correctAnswers} corretas, ${this.score} pontos`);
         }
         
         // Mostrar feedback visual
@@ -201,6 +216,7 @@ class QuizApp {
         // Avançar para próxima questão após delay
         setTimeout(() => {
             this.currentQuestion++;
+            this.quizCompleted = false; // Reativar para próxima pergunta
             this.updateProgress();
             this.showQuestion();
         }, 1500);
@@ -238,11 +254,17 @@ class QuizApp {
         
         const endTime = Date.now();
         const totalTime = Math.round((endTime - this.startTime) / 1000);
-        const accuracy = Math.round((this.correctAnswers / this.questions.length) * 100);
+        
+        // Garantir que os valores sejam válidos
+        const validCorrectAnswers = Math.max(0, Math.min(this.correctAnswers, this.questions.length));
+        const accuracy = this.questions.length > 0 ? Math.round((validCorrectAnswers / this.questions.length) * 100) : 0;
+        const finalScore = validCorrectAnswers * 100;
+        
+        console.log(`Resultados: ${validCorrectAnswers}/${this.questions.length} corretas, ${accuracy}% de precisão, ${finalScore} pontos`);
         
         // Atualizar elementos de resultado
-        document.getElementById('final-score').textContent = this.score;
-        document.getElementById('correct-answers').textContent = `${this.correctAnswers}/${this.questions.length}`;
+        document.getElementById('final-score').textContent = finalScore;
+        document.getElementById('correct-answers').textContent = `${validCorrectAnswers}/${this.questions.length}`;
         document.getElementById('accuracy').textContent = `${accuracy}%`;
         document.getElementById('quiz-time').textContent = `${totalTime}s`;
         
@@ -309,7 +331,17 @@ class QuizApp {
         console.log('Reiniciando quiz...');
         document.getElementById('results-screen').style.display = 'none';
         document.getElementById('question-container').style.display = 'block';
-        this.startQuiz();
+        
+        // Reset completo de todas as variáveis
+        this.currentQuestion = 0;
+        this.score = 0;
+        this.correctAnswers = 0;
+        this.startTime = Date.now();
+        this.quizCompleted = false;
+        this.selectedAnswer = null;
+        
+        this.showQuestion();
+        this.updateProgress();
     }
 }
 
